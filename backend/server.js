@@ -10,7 +10,7 @@ dotenv.config();
 
 // Initialize Express app
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 8080;
 
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
@@ -43,63 +43,71 @@ try {
 // MODELS
 
 // Rider Model
-const Rider = sequelize.define('riders', {
-    RiderID: { 
-        type: DataTypes.INTEGER, 
-        primaryKey: true, 
-        autoIncrement: true
+const Rider = sequelize.define('Rider', {
+    RiderID: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        autoIncrement: true,
+        field: "riderid"
     },
-    FirstName: { 
-        type: DataTypes.STRING(100), 
-        allowNull: false 
+    FirstName: {
+        type: DataTypes.STRING(50),
+        allowNull: false,
+        field: "firstname"
     },
-    LastName: { 
-        type: DataTypes.STRING(100), 
-        allowNull: false 
+    LastName: {
+        type: DataTypes.STRING(50),
+        allowNull: false,
+        field: "lastname"
     },
-    DateofBirth: { 
-        type: DataTypes.DATE, 
-        allowNull: false 
+    Email: {
+        type: DataTypes.STRING(100),
+        allowNull: false,
+        unique: true,
+        field: "email"
     },
-    PhoneNumber: { 
-        type: DataTypes.STRING(15), 
-        allowNull: true, 
+    PhoneNumber: {
+        type: DataTypes.STRING(15),
+        allowNull: true,
+        field: "phonenumber"
     },
-    Email: { 
-        type: DataTypes.STRING(100), 
-        allowNull: false, 
-        defaultValue: false 
+    signup_date: {
+        type: DataTypes.DATE,
+        field: "signup_date"
+    },
+    DateOfBirth: {
+        type: DataTypes.DATEONLY,
+        allowNull: true,
+        field: "dateofbirth"
     },
     StreetAddress: {
-        type: DataTypes.STRING(200),
-        allowNull: false
+        type: DataTypes.STRING(50),
+        allowNull: false,
+        field: "streetaddress"
     },
     City: {
-        type: DataTypes.STRING(100),
-        allowNull: false
+        type: DataTypes.STRING(50),
+        allowNull: false,
+        field: "city"
     },
     State: {
-        type: DataTypes.STRING(100),
-        allowNull: false
+        type: DataTypes.STRING(50),
+        allowNull: false,
+        field: "state"
     },
     ZipCode: {
-        type: DataTypes.STRING(20),
-        allowNull: false
+        type: DataTypes.STRING(10),
+        allowNull: false,
+        field: "zipcode"
     },
     LocationStatus: {
-        type: DataTypes.ENUM('on', 'off'),
-        allowNull: false,
-        defaultValue: 'off'
-    },
-    AccountStatus: {
-        type: DataTypes.ENUM('active', 'inactive'),
-        allowNull: false,
-        defaultValue: 'active'
-    },
+        type: DataTypes.STRING(20),
+        allowNull: true,
+        field: "locationstatus"
+    }
 }, {
-  tableName: 'riders',
-  timestamps: true,
-  underscored: true
+    tableName: 'riders',
+    timestamps: false   // VERY IMPORTANT
 });
 
 // AUTHENTICATION MIDDLEWARE
@@ -143,7 +151,7 @@ app.post('/api/riders', async (req, res) => {
         const {
             FirstName,
             LastName,
-            DateofBirth,
+            DateOfBirth,
             PhoneNumber,
             Email,
             StreetAddress,
@@ -153,7 +161,7 @@ app.post('/api/riders', async (req, res) => {
         } = req.body;
 
         // Validate required fields
-        if (!FirstName || !LastName || !DateofBirth || !Email || !StreetAddress || !City || !State || !ZipCode) {
+        if (!FirstName || !LastName || !DateOfBirth || !Email || !StreetAddress || !City || !State || !ZipCode) {
             return res.status(400).json({ 
                 error: 'Missing required fields' 
             });
@@ -171,7 +179,7 @@ app.post('/api/riders', async (req, res) => {
         const newRider = await Rider.create({
             FirstName,
             LastName,
-            DateofBirth,
+            DateOfBirth,
             PhoneNumber,
             Email,
             StreetAddress,
@@ -197,6 +205,26 @@ app.post('/api/riders', async (req, res) => {
     }
 });
 
+// GET all riders (for admin/table view - MVP: no auth required)
+app.get('/api/riders', async (req, res) => {
+    try {
+        const riders = await Rider.findAll({
+            // Temporarily removed AccountStatus filter - check if column exists in database
+            // where: {
+            //     AccountStatus: 'active'
+            // },
+            order: [['RiderID', 'ASC']]
+        });
+
+        res.status(200).json({ riders });
+    } catch (err) {
+        console.error('Error fetching riders:', err);
+        res.status(500).json({ 
+            error: 'Failed to fetch riders' 
+        });
+    }
+});
+
 // GET rider by id (rider can only see their own details)
 app.get('/api/riders/:id', authenticateToken, verifyRiderOwnership, async (req, res) => {
     try {
@@ -214,11 +242,13 @@ app.get('/api/riders/:id', authenticateToken, verifyRiderOwnership, async (req, 
         }
 
         // Only return active accounts
+        /*
         if (rider.AccountStatus === 'inactive') {
             return res.status(403).json({ 
                 error: 'Account is inactive' 
             });
         }
+        */
 
         res.status(200).json({ rider });
     } catch (err) {
@@ -229,14 +259,14 @@ app.get('/api/riders/:id', authenticateToken, verifyRiderOwnership, async (req, 
     }
 });
 
-// PUT update rider (rider can update their own details)
-app.put('/api/riders/:id', authenticateToken, verifyRiderOwnership, async (req, res) => {
+// PUT update rider (MVP: no auth required for admin interface)
+app.put('/api/riders/:id', async (req, res) => {
     try {
         const { id } = req.params;
         const {
             FirstName,
             LastName,
-            DateofBirth,
+            DateOfBirth,
             PhoneNumber,
             Email,
             StreetAddress,
@@ -257,11 +287,13 @@ app.put('/api/riders/:id', authenticateToken, verifyRiderOwnership, async (req, 
             });
         }
 
+        /*
         if (rider.AccountStatus === 'inactive') {
             return res.status(403).json({ 
                 error: 'Cannot update inactive account' 
             });
         }
+        */
 
         // If email is being changed, check for duplicates
         if (Email && Email !== rider.Email) {
@@ -277,7 +309,7 @@ app.put('/api/riders/:id', authenticateToken, verifyRiderOwnership, async (req, 
         const updateData = {};
         if (FirstName) updateData.FirstName = FirstName;
         if (LastName) updateData.LastName = LastName;
-        if (DateofBirth) updateData.DateofBirth = DateofBirth;
+        if (DateOfBirth) updateData.DateOfBirth = DateOfBirth;
         if (PhoneNumber !== undefined) updateData.PhoneNumber = PhoneNumber;
         if (Email) updateData.Email = Email;
         if (StreetAddress) updateData.StreetAddress = StreetAddress;
@@ -301,6 +333,7 @@ app.put('/api/riders/:id', authenticateToken, verifyRiderOwnership, async (req, 
 });
 
 // DELETE rider (rider can deactivate their own account)
+/*
 app.delete('/api/riders/:id', async (req, res) => {
     try {
         const { id } = req.params;
@@ -335,5 +368,6 @@ app.delete('/api/riders/:id', async (req, res) => {
         });
     }
 });
+*/
 
 // START SERVER
