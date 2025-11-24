@@ -75,6 +75,10 @@ const Rider = sequelize.define('Rider', {
         type: DataTypes.DATE,
         field: "signup_date"
     },
+    rider_status: {
+        type: DataTypes.STRING(20),
+        field: "rider_status"
+    },
     DateOfBirth: {
         type: DataTypes.DATEONLY,
         allowNull: true,
@@ -152,6 +156,8 @@ app.post('/api/riders', async (req, res) => {
             FirstName,
             LastName,
             DateOfBirth,
+            signup_date,
+            rider_status,
             PhoneNumber,
             Email,
             StreetAddress,
@@ -180,6 +186,8 @@ app.post('/api/riders', async (req, res) => {
             FirstName,
             LastName,
             DateOfBirth,
+            signup_date,
+            rider_status,
             PhoneNumber,
             Email,
             StreetAddress,
@@ -267,6 +275,8 @@ app.put('/api/riders/:id', async (req, res) => {
             FirstName,
             LastName,
             DateOfBirth,
+            signup_date,
+            rider_status,
             PhoneNumber,
             Email,
             StreetAddress,
@@ -310,6 +320,8 @@ app.put('/api/riders/:id', async (req, res) => {
         if (FirstName) updateData.FirstName = FirstName;
         if (LastName) updateData.LastName = LastName;
         if (DateOfBirth) updateData.DateOfBirth = DateOfBirth;
+        if (signup_date) updateData.signup_date = signup_date;
+        if (rider_status) updateData.rider_status = rider_status;
         if (PhoneNumber !== undefined) updateData.PhoneNumber = PhoneNumber;
         if (Email) updateData.Email = Email;
         if (StreetAddress) updateData.StreetAddress = StreetAddress;

@@ -146,6 +146,23 @@ const RiderPage: React.FC = () => {
       label: 'Date of Birth',
       render: (value: string) => new Date(value).toLocaleDateString(),
     },
+    {key: 'signup_date' as keyof Rider, label: 'Signup Date',
+      render: (value: string) => new Date(value).toLocaleDateString(),
+    },
+    {
+      key: 'rider_status' as keyof Rider,
+      label: 'Rider Status',
+      render: (value: string) => (
+        <span 
+          style={{ 
+            color: value === 'Active' ? '#3b82f6' : '#64748b',
+            fontWeight: value === 'on' ? 500 : 400,
+          }}
+        >
+          {value === 'Active' ? 'Active' : 'Inactive'}
+        </span>
+      ),
+    },
     { key: 'PhoneNumber' as keyof Rider, label: 'Phone' },
     { key: 'Email' as keyof Rider, label: 'Email' },
     { key: 'City' as keyof Rider, label: 'City' },

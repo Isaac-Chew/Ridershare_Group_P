@@ -12,6 +12,8 @@ const Form: React.FC<FormProps> = ({ rider, onSubmit, onCancel }) => {
     FirstName: '',
     LastName: '',
     DateOfBirth: '',
+    signup_date: '',
+    rider_status: 'Inactive',
     PhoneNumber: '',
     Email: '',
     StreetAddress: '',
@@ -46,6 +48,8 @@ const Form: React.FC<FormProps> = ({ rider, onSubmit, onCancel }) => {
           FirstName: (rider.FirstName || '').toString(),
           LastName: (rider.LastName || '').toString(),
           DateOfBirth: dateOfBirth,
+          signup_date: (rider.signup_date || '').toString(),
+          rider_status: (rider.rider_status || 'Inactive') as 'Active' | 'Inactive',
           PhoneNumber: (rider.PhoneNumber || '').toString(),
           Email: (rider.Email || '').toString(),
           StreetAddress: (rider.StreetAddress || '').toString(),
@@ -60,6 +64,8 @@ const Form: React.FC<FormProps> = ({ rider, onSubmit, onCancel }) => {
           FirstName: '',
           LastName: '',
           DateOfBirth: '',
+          signup_date: '',
+          rider_status: 'Inactive',
           PhoneNumber: '',
           Email: '',
           StreetAddress: '',
@@ -75,6 +81,8 @@ const Form: React.FC<FormProps> = ({ rider, onSubmit, onCancel }) => {
         FirstName: '',
         LastName: '',
         DateOfBirth: '',
+        signup_date: '',
+        rider_status: 'Inactive',
         PhoneNumber: '',
         Email: '',
         StreetAddress: '',
@@ -124,7 +132,15 @@ const Form: React.FC<FormProps> = ({ rider, onSubmit, onCancel }) => {
     e.preventDefault();
     
     if (validate()) {
-      onSubmit(formData);
+      // Don't send signup_date when empty so backend can set the insert timestamp.
+      const payload: Partial<RiderFormData> = { ...formData };
+      if (!payload.signup_date) {
+        delete payload.signup_date;
+      }
+      // If you instead want the client to set signup_date to today, uncomment:
+      // payload.signup_date = payload.signup_date || new Date().toISOString().split('T')[0];
+
+      onSubmit(payload as RiderFormData);
     }
   };
 
@@ -414,6 +430,19 @@ const Form: React.FC<FormProps> = ({ rider, onSubmit, onCancel }) => {
         >
           <option value="off">Off</option>
           <option value="on">On</option>
+        </select>
+      </div>
+
+      <div style={{ marginBottom: '20px' }}>
+        <label style={labelStyle}>Rider Status</label>
+        <select
+          name="rider_status"
+          value={formData.rider_status}
+          onChange={handleChange}
+          style={inputStyle}
+        >
+          <option value="Inactive">Inactive</option>
+          <option value="Active">Active</option>
         </select>
       </div>
 

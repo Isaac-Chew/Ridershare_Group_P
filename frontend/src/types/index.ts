@@ -3,6 +3,8 @@ export interface Rider {
   FirstName: string;
   LastName: string;
   DateOfBirth: string; // ISO date string
+  signup_date: string; // ISO date string
+  rider_status: 'Active' | 'Inactive';
   PhoneNumber: string | null;
   Email: string;
   StreetAddress: string;
@@ -19,6 +21,8 @@ export interface RiderFormData {
   FirstName: string;
   LastName: string;
   DateOfBirth: string;
+  signup_date: string;
+  rider_status: 'Active' | 'Inactive';
   PhoneNumber: string;
   Email: string;
   StreetAddress: string;
