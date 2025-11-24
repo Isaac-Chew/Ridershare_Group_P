@@ -3,7 +3,7 @@ import cors from 'cors';
 import { Sequelize, DataTypes } from 'sequelize';
 import dotenv from 'dotenv';
 import jwt from 'jsonwebtoken';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 
 // Load environment variables
 dotenv.config();
