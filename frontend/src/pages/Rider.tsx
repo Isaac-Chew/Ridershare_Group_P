@@ -4,7 +4,9 @@ import Form from '../components/Form';
 import Logo from '../components/Logo';
 import { Rider, RiderFormData } from '../types';
 
-const API_BASE_URL = '/api';  // Relative URL - Vite will proxy to backend
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+
+
 
 const RiderPage: React.FC = () => {
   const [riders, setRiders] = useState<Rider[]>([]);
@@ -18,7 +20,7 @@ const RiderPage: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_BASE_URL}/riders`);
+      const response = await fetch(`${API_BASE_URL}/api/riders`);
       if (!response.ok) {
         throw new Error('Failed to fetch riders');
       }
@@ -42,7 +44,7 @@ const RiderPage: React.FC = () => {
       setError(null);
       if (editingRider) {
         // Update existing rider
-        const response = await fetch(`${API_BASE_URL}/riders/${editingRider.RiderID}`, {
+        const response = await fetch(`${API_BASE_URL}/api/riders/${editingRider.RiderID}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -65,7 +67,7 @@ const RiderPage: React.FC = () => {
         });
       } else {
         // Create new rider
-        const response = await fetch(`${API_BASE_URL}/riders`, {
+        const response = await fetch(`${API_BASE_URL}/api/riders`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -107,7 +109,7 @@ const RiderPage: React.FC = () => {
 
     try {
       setError(null);
-      const response = await fetch(`${API_BASE_URL}/riders/${rider.RiderID}`, {
+      const response = await fetch(`${API_BASE_URL}/api/riders/${rider.RiderID}`, {
         method: 'DELETE',
       });
 
