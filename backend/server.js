@@ -114,6 +114,110 @@ const Rider = sequelize.define('Rider', {
     timestamps: false   // VERY IMPORTANT
 });
 
+// Driver Model
+const Driver = sequelize.define('Driver', {
+    DriverID: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        autoIncrement: true,
+        field: "driverid"
+    },
+    FirstName: {
+        type: DataTypes.STRING(50),
+        allowNull: false,
+        field: "firstname"
+    },
+    LastName: {
+        type: DataTypes.STRING(50),
+        allowNull: false,
+        field: "lastname"
+    },
+    DateOfBirth: {
+        type: DataTypes.DATEONLY,
+        allowNull: false,
+        field: "dateofbirth"
+    },
+    PhoneNumber: {
+        type: DataTypes.STRING(20),
+        allowNull: true,
+        field: "phonenumber"
+    },
+    Email: {
+        type: DataTypes.STRING(100),
+        allowNull: false,
+        unique: true,
+        field: "email"
+    },
+    StreetAddress: {
+        type: DataTypes.STRING(100),
+        allowNull: true,
+        field: "streetaddress"
+    },
+    City: {
+        type: DataTypes.STRING(50),
+        allowNull: true,
+        field: "city"
+    },
+    State: {
+        type: DataTypes.STRING(2),
+        allowNull: true,
+        field: "state"
+    },
+    ZipCode: {
+        type: DataTypes.STRING(10),
+        allowNull: true,
+        field: "zipcode"
+    },
+    Status: {
+        type: DataTypes.STRING(20),
+        allowNull: true,
+        field: "status"
+    },
+    LicenseNumber: {
+        type: DataTypes.STRING(50),
+        allowNull: true,
+        field: "licensenumber"
+    },
+    InsuranceID: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        field: "insuranceid"
+    },
+    BankID: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        field: "bankid"
+    },
+    VehicleID: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        field: "vehicleid"
+    },
+    VehicleColor: {
+        type: DataTypes.STRING(30),
+        allowNull: true,
+        field: "vehiclecolor"
+    },
+    VehicleMake: {
+        type: DataTypes.STRING(50),
+        allowNull: true,
+        field: "vehiclemake"
+    },
+    VehicleModel: {
+        type: DataTypes.STRING(50),
+        allowNull: true,
+        field: "vehiclemodel"
+    },
+    VehicleLicensePlate: {
+        type: DataTypes.STRING(20),
+        allowNull: true,
+        field: "vehiclelicenseplate"
+    }
+}, {
+    tableName: 'driver',
+    timestamps: false
+});
+
 // AUTHENTICATION MIDDLEWARE
 
 // Verify JWT token
@@ -147,7 +251,20 @@ const verifyRiderOwnership = (req, res, next) => {
     next();
 };
 
-// ROUTES
+// Verify driver owns the resource
+const verifyDriverOwnership = (req, res, next) => {
+    const requestedDriverId = parseInt(req.params.id);
+    const loggedInDriverId = req.user.driverId;
+
+    if (requestedDriverId !== loggedInDriverId) {
+        return res.status(403).json({ 
+            error: 'You can only access your own account' 
+        });
+    }
+    next();
+};
+
+// RIDER ROUTES
 
 // POST new rider (user can register)
 app.post('/api/riders', async (req, res) => {
@@ -217,10 +334,9 @@ app.post('/api/riders', async (req, res) => {
 app.get('/api/riders', async (req, res) => {
     try {
         const riders = await Rider.findAll({
-            // Temporarily removed AccountStatus filter - check if column exists in database
-            // where: {
-            //     AccountStatus: 'active'
-            // },
+            where: {
+                rider_status: 'active'
+            },
             order: [['RiderID', 'ASC']]
         });
 
@@ -249,14 +365,11 @@ app.get('/api/riders/:id', authenticateToken, verifyRiderOwnership, async (req, 
             });
         }
 
-        // Only return active accounts
-        /*
-        if (rider.AccountStatus === 'inactive') {
+        if (rider.rider_status === 'inactive') {
             return res.status(403).json({ 
                 error: 'Account is inactive' 
             });
         }
-        */
 
         res.status(200).json({ rider });
     } catch (err) {
@@ -297,13 +410,11 @@ app.put('/api/riders/:id', async (req, res) => {
             });
         }
 
-        /*
-        if (rider.AccountStatus === 'inactive') {
+        if (rider.rider_status === 'inactive') {
             return res.status(403).json({ 
                 error: 'Cannot update inactive account' 
             });
         }
-        */
 
         // If email is being changed, check for duplicates
         if (Email && Email !== rider.Email) {
@@ -345,7 +456,6 @@ app.put('/api/riders/:id', async (req, res) => {
 });
 
 // DELETE rider (rider can deactivate their own account)
-/*
 app.delete('/api/riders/:id', async (req, res) => {
     try {
         const { id } = req.params;
@@ -361,14 +471,14 @@ app.delete('/api/riders/:id', async (req, res) => {
             });
         }
 
-        if (rider.AccountStatus === 'inactive') {
+        if (rider.rider_status === 'inactive') {
             return res.status(400).json({ 
                 error: 'Account is already inactive' 
             });
         }
 
-        // Soft delete by setting AccountStatus to inactive
-        await rider.update({ AccountStatus: 'inactive' });
+        // Soft delete by setting rider status to inactive
+        await rider.update({ rider_status: 'inactive' });
 
         res.status(200).json({
             message: 'Account deactivated successfully'
@@ -380,6 +490,249 @@ app.delete('/api/riders/:id', async (req, res) => {
         });
     }
 });
-*/
+
+// DRIVER ROUTES
+
+// POST new driver (user can register)
+app.post('/api/drivers', async (req, res) => {
+    try {
+        const {
+            FirstName,
+            LastName,
+            DateOfBirth,
+            PhoneNumber,
+            Email,
+            StreetAddress,
+            City,
+            State,
+            ZipCode,
+            Status,
+            LicenseNumber,
+            InsuranceID,
+            BankID,
+            VehicleID,
+            VehicleColor,
+            VehicleMake,
+            VehicleModel,
+            VehicleLicensePlate
+        } = req.body;
+
+        // Validate required fields
+        if (!FirstName || !LastName || !DateOfBirth || !Email) {
+            return res.status(400).json({ 
+                error: 'Missing required fields' 
+            });
+        }
+
+        // Check if email already exists
+        const existingDriver = await Driver.findOne({ where: { Email } });
+        if (existingDriver) {
+            return res.status(409).json({ 
+                error: 'Email already registered' 
+            });
+        }
+
+        // Create new driver
+        const newDriver = await Driver.create({
+            FirstName,
+            LastName,
+            DateOfBirth,
+            PhoneNumber,
+            Email,
+            StreetAddress,
+            City,
+            State,
+            ZipCode,
+            Status,
+            LicenseNumber,
+            InsuranceID,
+            BankID,
+            VehicleID,
+            VehicleColor,
+            VehicleMake,
+            VehicleModel,
+            VehicleLicensePlate
+        });
+
+        res.status(201).json({
+            message: 'Driver registered successfully',
+            driver: {
+                DriverID: newDriver.DriverID,
+                FirstName: newDriver.FirstName,
+                LastName: newDriver.LastName,
+                Email: newDriver.Email
+            }
+        });
+    } catch (err) {
+        console.error('Error creating driver:', err);
+        res.status(500).json({ 
+            error: 'Failed to register driver' 
+        });
+    }
+});
+
+// GET all drivers (for admin/table view - MVP: no auth required)
+app.get('/api/drivers', async (req, res) => {
+    try {
+        const drivers = await Driver.findAll({
+            where: {
+                Status: 'active'
+            },
+            order: [['DriverID', 'ASC']]
+        });
+
+        res.status(200).json({ drivers });
+    } catch (err) {
+        console.error('Error fetching drivers:', err);
+        res.status(500).json({ 
+            error: 'Failed to fetch drivers' 
+        });
+    }
+});
+
+// GET driver by id (driver can only see their own details)
+app.get('/api/drivers/:id', authenticateToken, verifyDriverOwnership, async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const driver = await Driver.findByPk(id);
+
+        if (!driver) {
+            return res.status(404).json({ 
+                error: 'Driver not found' 
+            });
+        }
+
+        if (driver.Status === 'inactive') {
+            return res.status(403).json({ 
+                error: 'Account is inactive' 
+            });
+        }
+
+        res.status(200).json({ driver });
+    } catch (err) {
+        console.error('Error fetching driver:', err);
+        res.status(500).json({ 
+            error: 'Failed to fetch driver details' 
+        });
+    }
+});
+
+// PUT update driver (MVP: no auth required for admin interface)
+app.put('/api/drivers/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const {
+            FirstName,
+            LastName,
+            DateOfBirth,
+            PhoneNumber,
+            Email,
+            StreetAddress,
+            City,
+            State,
+            ZipCode,
+            Status,
+            LicenseNumber,
+            InsuranceID,
+            BankID,
+            VehicleID,
+            VehicleColor,
+            VehicleMake,
+            VehicleModel,
+            VehicleLicensePlate
+        } = req.body;
+
+        const driver = await Driver.findByPk(id);
+
+        if (!driver) {
+            return res.status(404).json({ 
+                error: 'Driver not found' 
+            });
+        }
+
+        if (driver.Status === 'inactive') {
+            return res.status(403).json({ 
+                error: 'Cannot update inactive account' 
+            });
+        }
+
+        // If email is being changed, check for duplicates
+        if (Email && Email !== driver.Email) {
+            const existingDriver = await Driver.findOne({ where: { Email } });
+            if (existingDriver) {
+                return res.status(409).json({ 
+                    error: 'Email already in use' 
+                });
+            }
+        }
+
+        // Update only provided fields
+        const updateData = {};
+        if (FirstName) updateData.FirstName = FirstName;
+        if (LastName) updateData.LastName = LastName;
+        if (DateOfBirth) updateData.DateOfBirth = DateOfBirth;
+        if (PhoneNumber !== undefined) updateData.PhoneNumber = PhoneNumber;
+        if (Email) updateData.Email = Email;
+        if (StreetAddress !== undefined) updateData.StreetAddress = StreetAddress;
+        if (City !== undefined) updateData.City = City;
+        if (State !== undefined) updateData.State = State;
+        if (ZipCode !== undefined) updateData.ZipCode = ZipCode;
+        if (Status) updateData.Status = Status;
+        if (LicenseNumber !== undefined) updateData.LicenseNumber = LicenseNumber;
+        if (InsuranceID !== undefined) updateData.InsuranceID = InsuranceID;
+        if (BankID !== undefined) updateData.BankID = BankID;
+        if (VehicleID !== undefined) updateData.VehicleID = VehicleID;
+        if (VehicleColor !== undefined) updateData.VehicleColor = VehicleColor;
+        if (VehicleMake !== undefined) updateData.VehicleMake = VehicleMake;
+        if (VehicleModel !== undefined) updateData.VehicleModel = VehicleModel;
+        if (VehicleLicensePlate !== undefined) updateData.VehicleLicensePlate = VehicleLicensePlate;
+
+        await driver.update(updateData);
+
+        res.status(200).json({
+            message: 'Driver updated successfully',
+            driver
+        });
+    } catch (err) {
+        console.error('Error updating driver:', err);
+        res.status(500).json({ 
+            error: 'Failed to update driver' 
+        });
+    }
+});
+
+// DELETE driver (driver can deactivate their own account)
+app.delete('/api/drivers/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const driver = await Driver.findByPk(id);
+
+        if (!driver) {
+            return res.status(404).json({ 
+                error: 'Driver not found' 
+            });
+        }
+
+        if (driver.Status === 'inactive') {
+            return res.status(400).json({ 
+                error: 'Account is already inactive' 
+            });
+        }
+
+        // Soft delete by setting Status to inactive
+        await driver.update({ Status: 'inactive' });
+
+        res.status(200).json({
+            message: 'Account deactivated successfully'
+        });
+    } catch (err) {
+        console.error('Error deactivating driver:', err);
+        res.status(500).json({ 
+            error: 'Failed to deactivate account' 
+        });
+    }
+});
 
 // START SERVER
