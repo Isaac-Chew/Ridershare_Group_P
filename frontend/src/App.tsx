@@ -1,10 +1,11 @@
 import './App.css'
-import Rider from './pages/Rider'
+import Driver from './pages/Driver'
 
 function App() {
   return (
     <div className="App">
-      <Rider />
+  {/* Render Rider by default; switch to <Driver /> to view driver page */}
+  <Driver />
     </div>
   )
 }
