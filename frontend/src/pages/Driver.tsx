@@ -4,7 +4,8 @@ import DriverTable from '../components/DriverTable';
 import Form from '../components/Form';
 import { Driver, DriverFormData } from '../types';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+// Use relative URL in development to leverage Vite proxy, or env variable in production
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 const DriverPage: React.FC = () => {
   const [drivers, setDrivers] = useState<Driver[]>([]);
@@ -39,31 +40,50 @@ const DriverPage: React.FC = () => {
     try {
       setError(null);
       if (editingDriver) {
+        // Update existing driver
         const response = await fetch(`${API_BASE_URL}/api/drivers/${editingDriver.DriverID}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+          },
           body: JSON.stringify(formData),
         });
+
         if (!response.ok) {
           const errorData = await response.json();
           throw new Error(errorData.error || 'Failed to update driver');
         }
+
+        // Close form and return to table view immediately
         setShowForm(false);
         setEditingDriver(null);
-        fetchDrivers().catch(err => console.error('Error refreshing drivers list:', err));
+        
+        // Refresh the list to show updated data
+        fetchDrivers().catch(err => {
+          console.error('Error refreshing drivers list:', err);
+        });
       } else {
+        // Create new driver
         const response = await fetch(`${API_BASE_URL}/api/drivers`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+          },
           body: JSON.stringify(formData),
         });
         if (!response.ok) {
           const errorData = await response.json();
           throw new Error(errorData.error || 'Failed to create driver');
         }
+
+        // Close form and return to table view immediately
         setShowForm(false);
         setEditingDriver(null);
-        fetchDrivers().catch(err => console.error('Error refreshing drivers list:', err));
+        
+        // Refresh the list to show new driver
+        fetchDrivers().catch(err => {
+          console.error('Error refreshing drivers list:', err);
+        });
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
@@ -85,10 +105,13 @@ const DriverPage: React.FC = () => {
       const response = await fetch(`${API_BASE_URL}/api/drivers/${driver.DriverID}`, {
         method: 'DELETE',
       });
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to delete driver');
       }
+
+      // Refresh the list
       await fetchDrivers();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');

@@ -575,9 +575,6 @@ app.post('/api/drivers', async (req, res) => {
 app.get('/api/drivers', async (req, res) => {
     try {
         const drivers = await Driver.findAll({
-            where: {
-                Status: 'active'
-            },
             order: [['DriverID', 'ASC']]
         });
 
