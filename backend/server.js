@@ -218,6 +218,59 @@ const Driver = sequelize.define('Driver', {
     timestamps: false
 });
 
+// Trip Model
+const Trip = sequelize.define('Trip', {
+    RideID: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        autoIncrement: true,
+        field: "rideid"
+    },
+    PickUpLocation: {
+        type: DataTypes.STRING(100),
+        allowNull: true,
+        field: "pickuplocation"
+    },
+    DropOffLocation: {
+        type: DataTypes.STRING(100),
+        allowNull: true,
+        field: "dropofflocation"
+    },
+    EstimatedTime: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        field: "estimatedtime"
+    },
+    Fare: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: true,
+        field: "fare"
+    },
+    Tip: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: true,
+        field: "tip"
+    },
+    RideStatus: {
+        type: DataTypes.STRING(20),
+        allowNull: true,
+        field: "ridestatus"
+    },
+    RiderID: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        field: "riderid"
+    },
+    DriverID: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        field: "driverid"
+    }
+}, {
+    tableName: 'trip',
+    timestamps: false
+});
+
 // AUTHENTICATION MIDDLEWARE
 
 // Verify JWT token
@@ -731,5 +784,181 @@ app.delete('/api/drivers/:id', async (req, res) => {
         });
     }
 });
+
+// TRIP ROUTES
+
+// POST new trip (rider requests ride)
+app.post('/api/trips', async (req, res) => {
+    try {
+        const {
+            PickUpLocation,
+            DropOffLocation,
+            EstimatedTime,
+            Fare,
+            Tip,
+            RideStatus,
+            RiderID,
+            DriverID
+        } = req.body;
+
+        // Validate required fields
+        if (!PickUpLocation || !DropOffLocation || !RiderID) {
+            return res.status(400).json({ 
+                error: 'Missing required fields: PickUpLocation, DropOffLocation, and RiderID are required' 
+            });
+        }
+
+        // Create new trip
+        const newTrip = await Trip.create({
+            PickUpLocation,
+            DropOffLocation,
+            EstimatedTime,
+            Fare,
+            Tip,
+            RideStatus: RideStatus || 'Requested',
+            RiderID,
+            DriverID: DriverID || null
+        });
+
+        res.status(201).json({
+            message: 'Trip created successfully',
+            trip: newTrip
+        });
+    } catch (err) {
+        console.error('Error creating trip:', err);
+        res.status(500).json({ 
+            error: 'Failed to create trip' 
+        });
+    }
+});
+
+// GET all trips
+app.get('/api/trips', async (req, res) => {
+    try {
+        const trips = await Trip.findAll({
+            order: [['RideID', 'ASC']]
+        });
+
+        res.status(200).json({ trips });
+    } catch (err) {
+        console.error('Error fetching trips:', err);
+        res.status(500).json({ 
+            error: 'Failed to fetch trips' 
+        });
+    }
+});
+
+// GET trips by RiderID
+app.get('/api/trips/rider/:RiderID', async (req, res) => {
+    try {
+        const { RiderID } = req.params;
+        const riderIdInt = parseInt(RiderID);
+
+        if (isNaN(riderIdInt)) {
+            return res.status(400).json({ 
+                error: 'Invalid rider ID' 
+            });
+        }
+
+        const trips = await Trip.findAll({
+            where: {
+                RiderID: riderIdInt
+            },
+            order: [['RideID', 'ASC']]
+        });
+
+        res.status(200).json({ trips });
+    } catch (err) {
+        console.error('Error fetching trips by rider:', err);
+        res.status(500).json({ 
+            error: 'Failed to fetch trips' 
+        });
+    }
+});
+
+// GET trips by DriverID
+app.get('/api/trips/driver/:DriverID', async (req, res) => {
+    try {
+        const { DriverID } = req.params;
+        const driverIdInt = parseInt(DriverID);
+
+        if (isNaN(driverIdInt)) {
+            return res.status(400).json({ 
+                error: 'Invalid driver ID' 
+            });
+        }
+
+        const trips = await Trip.findAll({
+            where: {
+                DriverID: driverIdInt
+            },
+            order: [['RideID', 'ASC']]
+        });
+
+        res.status(200).json({ trips });
+    } catch (err) {
+        console.error('Error fetching trips by driver:', err);
+        res.status(500).json({ 
+            error: 'Failed to fetch trips' 
+        });
+    }
+});
+
+// GET trips by RideStatus
+app.get('/api/trips/status/:status', async (req, res) => {
+    try {
+        const { status } = req.params;
+
+        const trips = await Trip.findAll({
+            where: {
+                RideStatus: status
+            },
+            order: [['RideID', 'ASC']]
+        });
+
+        res.status(200).json({ trips });
+    } catch (err) {
+        console.error('Error fetching trips by status:', err);
+        res.status(500).json({ 
+            error: 'Failed to fetch trips' 
+        });
+    }
+});
+
+// DELETE trip (soft delete by setting RideStatus to Cancelled)
+app.delete('/api/trips/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const tripIdInt = parseInt(id);
+
+        if (isNaN(tripIdInt)) {
+            return res.status(400).json({ 
+                error: 'Invalid trip ID' 
+            });
+        }
+
+        const trip = await Trip.findByPk(tripIdInt);
+
+        if (!trip) {
+            return res.status(404).json({ 
+                error: 'Trip not found' 
+            });
+        }
+
+        // Soft delete by setting RideStatus to Cancelled
+        await trip.update({ RideStatus: 'Cancelled' });
+
+        res.status(200).json({
+            message: 'Trip cancelled successfully',
+            trip
+        });
+    } catch (err) {
+        console.error('Error cancelling trip:', err);
+        res.status(500).json({ 
+            error: 'Failed to cancel trip' 
+        });
+    }
+});
+
 
 // START SERVER
