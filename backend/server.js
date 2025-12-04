@@ -815,7 +815,7 @@ app.post('/api/trips', async (req, res) => {
             EstimatedTime,
             Fare,
             Tip,
-            RideStatus: RideStatus || 'Requested',
+            RideStatus: 'Requested', // Always set to Requested for new trips
             RiderID,
             DriverID: DriverID || null
         });
@@ -921,6 +921,65 @@ app.get('/api/trips/status/:status', async (req, res) => {
         console.error('Error fetching trips by status:', err);
         res.status(500).json({ 
             error: 'Failed to fetch trips' 
+        });
+    }
+});
+
+// PUT update trip (accept trip - driver accepts ride)
+app.put('/api/trips/:id/accept', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { DriverID } = req.body;
+        const tripIdInt = parseInt(id);
+
+        if (isNaN(tripIdInt)) {
+            return res.status(400).json({ 
+                error: 'Invalid trip ID' 
+            });
+        }
+
+        if (!DriverID) {
+            return res.status(400).json({ 
+                error: 'DriverID is required' 
+            });
+        }
+
+        const trip = await Trip.findByPk(tripIdInt);
+
+        if (!trip) {
+            return res.status(404).json({ 
+                error: 'Trip not found' 
+            });
+        }
+
+        // Validate that trip is in Requested status
+        if (trip.RideStatus !== 'Requested') {
+            return res.status(400).json({ 
+                error: 'Trip is not available for acceptance. Only trips with status "Requested" can be accepted.' 
+            });
+        }
+
+        // Validate that trip doesn't already have a driver
+        if (trip.DriverID !== null) {
+            return res.status(400).json({ 
+                error: 'Trip has already been accepted by another driver' 
+            });
+        }
+
+        // Update trip: set DriverID and change status to InProgress
+        await trip.update({ 
+            DriverID: DriverID,
+            RideStatus: 'InProgress'
+        });
+
+        res.status(200).json({
+            message: 'Trip accepted successfully',
+            trip
+        });
+    } catch (err) {
+        console.error('Error accepting trip:', err);
+        res.status(500).json({ 
+            error: 'Failed to accept trip' 
         });
     }
 });

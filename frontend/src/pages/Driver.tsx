@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import Logo from '../components/Logo';
 import DriverTable from '../components/DriverTable';
+import TripsTable from '../components/TripsTable';
 import Form from '../components/Form';
-import { Driver, DriverFormData } from '../types';
+import { Driver, DriverFormData, Trip } from '../types';
 
 // Use relative URL in development to leverage Vite proxy, or env variable in production
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
@@ -13,6 +14,13 @@ const DriverPage: React.FC = () => {
   const [showForm, setShowForm] = useState(false);
   const [editingDriver, setEditingDriver] = useState<Driver | null>(null);
   const [error, setError] = useState<string | null>(null);
+  
+  // Trips state
+  const [trips, setTrips] = useState<Trip[]>([]);
+  const [isLoadingTrips, setIsLoadingTrips] = useState(false);
+  
+  // Placeholder driver ID - will be replaced with actual auth later
+  const currentDriverId = 1;
 
   const fetchDrivers = async () => {
     setIsLoading(true);
@@ -32,8 +40,57 @@ const DriverPage: React.FC = () => {
     }
   };
 
+  const fetchRequestedTrips = async () => {
+    setIsLoadingTrips(true);
+    setError(null);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/trips/status/Requested`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch requested trips');
+      }
+      const data = await response.json();
+      setTrips(data.trips || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      console.error('Error fetching requested trips:', err);
+    } finally {
+      setIsLoadingTrips(false);
+    }
+  };
+
+  const handleAcceptTrip = async (trip: Trip) => {
+    if (!window.confirm(`Accept this ride from ${trip.PickUpLocation} to ${trip.DropOffLocation}?`)) {
+      return;
+    }
+    
+    try {
+      setError(null);
+      const response = await fetch(`${API_BASE_URL}/api/trips/${trip.RideID}/accept`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          DriverID: currentDriverId
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to accept trip');
+      }
+
+      // Refresh the trips list to remove the accepted trip
+      await fetchRequestedTrips();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      console.error('Error accepting trip:', err);
+    }
+  };
+
   useEffect(() => {
     fetchDrivers();
+    fetchRequestedTrips();
   }, []);
 
   const handleFormSubmit = async (formData: DriverFormData) => {
@@ -236,13 +293,26 @@ const DriverPage: React.FC = () => {
             onCancel={handleCancel}
           />
         ) : (
-          <DriverTable
-            data={drivers}
-            columns={columns}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            isLoading={isLoading}
-          />
+          <>
+            <DriverTable
+              data={drivers}
+              columns={columns}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              isLoading={isLoading}
+            />
+            
+            <div style={{ marginTop: '40px' }}>
+              <h3 style={{ marginBottom: '20px', color: '#1f2937', fontWeight: 600 }}>
+                Available Rides (Requested)
+              </h3>
+              <TripsTable
+                data={trips}
+                isLoading={isLoadingTrips}
+                onAccept={handleAcceptTrip}
+              />
+            </div>
+          </>
         )}
       </div>
     </div>
