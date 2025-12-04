@@ -30,7 +30,7 @@ const TripForm: React.FC<TripFormProps> = ({ trip, riderId, onSubmit, onCancel }
       Tip: typeof trip?.Tip === 'number' ? trip!.Tip : Number(trip?.Tip ?? 0),
       RiderID: riderId,
       DriverID: trip?.DriverID ?? null,
-      RideStatus: trip?.RideStatus ?? 'Requested',
+      // RideStatus is always set to 'Requested' by the backend for new trips
     }));
   }, [trip, riderId]);
 
@@ -60,7 +60,7 @@ const TripForm: React.FC<TripFormProps> = ({ trip, riderId, onSubmit, onCancel }
       Tip: Number(formData.Tip || 0),
       RiderID: riderId,
       DriverID: formData.DriverID ?? null,
-      RideStatus: formData.RideStatus || 'Requested',
+      // RideStatus is always set to 'Requested' by the backend for new trips
     };
 
     onSubmit(payload);
