@@ -83,3 +83,22 @@ export interface DriverFormData {
   VehicleLicensePlate?: string;
 }
 
+// Trip types for Trip management
+export type RideStatus = 'Requested' | 'InProgress' | 'Completed' | 'Cancelled';
+
+export interface Trip {
+  RideID: number;
+  PickUpLocation: string;
+  DropOffLocation: string;
+  EstimatedTime: number; // in minutes
+  Fare: number; // decimal(10,2)
+  Tip: number; // decimal(10,2)
+  RideStatus: RideStatus;
+
+  RiderID: number;
+  DriverID: number | null;
+
+  createdAt?: string;
+  updatedAt?: string;
+}
+
