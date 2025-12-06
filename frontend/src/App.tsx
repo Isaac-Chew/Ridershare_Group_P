@@ -5,7 +5,7 @@ import { useAuthContext } from "@asgardeo/auth-react";
 import Rider from "./pages/Rider";
 import Login from "./pages/Login";
 import React, { useEffect, useState } from "react";
-// import Driver from "./pages/Driver"; // if you add a driver page later
+import Driver from "./pages/Driver"; // if you add a driver page later
 
 const App: React.FC = () => {
   const { state, getDecodedIDToken } = useAuthContext();
@@ -38,6 +38,7 @@ const App: React.FC = () => {
   }, [state.isAuthenticated, getDecodedIDToken]);
 
   const isRider = roles.includes("rider");
+  const isDriver = roles.includes("driver");
   // const isDriver = roles.includes("driver");
 
   return (
@@ -57,7 +58,7 @@ const App: React.FC = () => {
         }
       />
 
-      {/* Example for a driver route later:
+      {
       <Route
         path="/driver"
         element={
@@ -67,7 +68,7 @@ const App: React.FC = () => {
             <Navigate to="/unauthorized" replace />
           )
         }
-      /> */}
+      />}
     </Routes>
   );
 };
