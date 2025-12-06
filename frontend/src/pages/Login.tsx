@@ -19,6 +19,9 @@ const Login: React.FC = () => {
       try {
         const payload: any = await getDecodedIDToken();
         
+        // Delete this line after debugging
+        console.log("ID token payload:", payload);  
+
         const tokenRoles: string[] =
           (payload?.roles as string[]) ||
           (payload?.role as string[]) ||
