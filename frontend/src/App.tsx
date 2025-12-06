@@ -1,30 +1,27 @@
 // src/App.tsx
 import "./App.css";
 import { Routes, Route, Navigate } from "react-router-dom";
-import { SignedIn, SignedOut } from "@asgardeo/react";
+import { useAuthContext } from "@asgardeo/auth-react";
 import Rider from "./pages/Rider";
 import Login from "./pages/Login";
 
 const App: React.FC = () => {
+  const { state } = useAuthContext();
+
   return (
     <Routes>
-      {/* Login page */}
+      {/* Public login page */}
       <Route path="/" element={<Login />} />
 
       {/* Protected Rider page */}
       <Route
         path="/rider"
         element={
-          <>
-            <SignedIn>
-              <Rider />
-            </SignedIn>
-
-            {/* If user is not signed in and hits /rider, send them to login */}
-            <SignedOut>
-              <Navigate to="/" replace />
-            </SignedOut>
-          </>
+          state.isAuthenticated ? (
+            <Rider />
+          ) : (
+            <Navigate to="/" replace />
+          )
         }
       />
     </Routes>
