@@ -1,24 +1,30 @@
 // src/pages/Login.tsx
-import { SignedIn, SignedOut, SignInButton, SignOutButton } from "@asgardeo/react";
+import { useAuthContext } from "@asgardeo/auth-react";
 import { Link } from "react-router-dom";
 
 const Login: React.FC = () => {
+  const { state, signIn, signOut } = useAuthContext();
+
   return (
     <div className="App">
       <h1>Rideshare Login</h1>
 
-      <SignedOut>
-        <p>Please sign in to access your rides.</p>
-        <SignInButton>Sign in with Asgardeo</SignInButton>
-      </SignedOut>
+      {!state.isAuthenticated && (
+        <>
+          <p>Please sign in to access your rides.</p>
+          <button onClick={() => signIn()}>Sign in with Asgardeo</button>
+        </>
+      )}
 
-      <SignedIn>
-        <p>
-          You’re already signed in. Go to your{" "}
-          <Link to="/rider">Rider page</Link>.
-        </p>
-        <SignOutButton>Sign Out</SignOutButton>
-      </SignedIn>
+      {state.isAuthenticated && (
+        <>
+          <p>
+            You’re signed in. Go to your{" "}
+            <Link to="/rider">Rider page</Link>.
+          </p>
+          <button onClick={() => signOut()}>Sign out</button>
+        </>
+      )}
     </div>
   );
 };
