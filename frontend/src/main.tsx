@@ -15,7 +15,7 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
         signOutRedirectURL: `${origin}`,
         clientID: import.meta.env.VITE_ASGARDEO_CLIENT_ID,
         baseUrl: import.meta.env.VITE_ASGARDEO_BASE_URL,
-        scope: ["openid", "profile", "roles"],
+        scope: ["openid", "profile", "roles", "email"],
       }}
     >
       <BrowserRouter>
