@@ -11,8 +11,8 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <AuthProvider
       config={{
-        signInRedirectURL: `${origin}/`,
-        signOutRedirectURL: `${origin}/`,
+        signInRedirectURL: `${origin}`,
+        signOutRedirectURL: `${origin}`,
         clientID: import.meta.env.VITE_ASGARDEO_CLIENT_ID,
         baseUrl: import.meta.env.VITE_ASGARDEO_BASE_URL,
         scope: ["openid", "profile"],
