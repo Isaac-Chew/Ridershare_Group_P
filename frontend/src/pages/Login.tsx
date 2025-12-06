@@ -1,9 +1,49 @@
-// src/pages/Login.tsx
 import { useAuthContext } from "@asgardeo/auth-react";
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Navigate } from "react-router-dom";
 
 const Login: React.FC = () => {
-  const { state, signIn, signOut } = useAuthContext();
+  const { state, signIn, getDecodedIDToken } = useAuthContext();
+  const [roles, setRoles] = useState<string[]>([]);
+  const [loadingRoles, setLoadingRoles] = useState(true);
+
+  // Load roles whenever user becomes authenticated
+    useEffect(() => {
+    const loadRoles = async () => {
+      if (!state.isAuthenticated) {
+        setRoles([]);
+        setLoadingRoles(false);
+        return;
+      }
+
+      try {
+        const payload: any = await getDecodedIDToken();
+        
+        const tokenRoles: string[] =
+          (payload?.roles as string[]) ||
+          (payload?.role as string[]) ||
+          [];
+
+        setRoles(tokenRoles);
+      } catch (err) {
+        console.error("Error decoding ID token:", err);
+        setRoles([]);
+      }
+
+      setLoadingRoles(false);
+    };
+
+    loadRoles();
+  }, [state.isAuthenticated, getDecodedIDToken]);
+
+  // Auto-redirect based on role
+  if (state.isAuthenticated && !loadingRoles) {
+    if (roles.includes("rider")) return <Navigate to="/rider" replace />;
+    if (roles.includes("driver")) return <Navigate to="/driver" replace />;
+
+    // no role found:
+    return <p>No role assigned. Contact admin.</p>;
+  }
 
   return (
     <div className="App">
@@ -11,18 +51,8 @@ const Login: React.FC = () => {
 
       {!state.isAuthenticated && (
         <>
-          <p>Please sign in to access your rides.</p>
+          <p>Please sign in to continue.</p>
           <button onClick={() => signIn()}>Sign in with Asgardeo</button>
-        </>
-      )}
-
-      {state.isAuthenticated && (
-        <>
-          <p>
-            You’re signed in. Go to your{" "}
-            <Link to="/rider">Rider page</Link>.
-          </p>
-          <button onClick={() => signOut()}>Sign out</button>
         </>
       )}
     </div>
