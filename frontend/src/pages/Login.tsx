@@ -17,7 +17,7 @@ const Login: React.FC = () => {
   const [showRiderForm, setShowRiderForm] = useState(false);
   const [showDriverForm, setShowDriverForm] = useState(false);
 
-  // Load roles whenever user becomes authenticated
+  // Load roles only when authenticated
   useEffect(() => {
     const loadRoles = async () => {
       if (!state.isAuthenticated) {
@@ -28,7 +28,6 @@ const Login: React.FC = () => {
 
       try {
         const payload: any = await getDecodedIDToken();
-
         console.log("ID token payload:", payload);
 
         const tokenRoles: string[] =
@@ -48,6 +47,9 @@ const Login: React.FC = () => {
     loadRoles();
   }, [state.isAuthenticated, getDecodedIDToken]);
 
+  // ===========================
+  // RIDER SUBMIT
+  // ===========================
   const handleRiderSubmit = async (data: RiderFormData) => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/riders`, {
@@ -61,7 +63,7 @@ const Login: React.FC = () => {
         throw new Error(err.error || "Failed to create rider");
       }
 
-      alert("Rider created successfully");
+      alert("Rider created successfully!");
       setShowRiderForm(false);
     } catch (err) {
       console.error("Error creating rider from login:", err);
@@ -69,6 +71,9 @@ const Login: React.FC = () => {
     }
   };
 
+  // ===========================
+  // DRIVER SUBMIT
+  // ===========================
   const handleDriverSubmit = async (data: DriverFormData) => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/driver`, {
@@ -82,7 +87,7 @@ const Login: React.FC = () => {
         throw new Error(err.error || "Failed to create driver");
       }
 
-      alert("Driver created successfully");
+      alert("Driver created successfully!");
       setShowDriverForm(false);
     } catch (err) {
       console.error("Error creating driver from login:", err);
@@ -90,70 +95,61 @@ const Login: React.FC = () => {
     }
   };
 
+  // ===========================
+  // RENDER
+  // ===========================
   return (
     <div className="App">
       <h1>Rideshare Login</h1>
 
-      {/* Not signed in: just show sign-in button */}
-      {!state.isAuthenticated && (
-        <>
-          <p>Please sign in to continue.</p>
-          <button onClick={() => signIn()}>Sign in with Asgardeo</button>
-        </>
+      {/* BUTTONS SHOW EVEN WHEN NOT AUTHENTICATED */}
+      <div style={{ display: "flex", gap: "12px", marginBottom: "16px" }}>
+        <button
+          onClick={() => {
+            setShowRiderForm(true);
+            setShowDriverForm(false);
+          }}
+        >
+          Add New Rider
+        </button>
+
+        <button
+          onClick={() => {
+            setShowDriverForm(true);
+            setShowRiderForm(false);
+          }}
+        >
+          Add New Driver
+        </button>
+      </div>
+
+      {/* RIDER FORM POPUP */}
+      {showRiderForm && (
+        <Form
+          rider={null}
+          onSubmit={handleRiderSubmit}
+          onCancel={() => setShowRiderForm(false)}
+        />
       )}
 
-      {/* Signed in: show roles, add buttons, and forms */}
+      {/* DRIVER FORM POPUP */}
+      {showDriverForm && (
+        <DriverForm
+          driver={null}
+          onSubmit={handleDriverSubmit}
+          onCancel={() => setShowDriverForm(false)}
+        />
+      )}
+
+      {/* SIGN-IN / SIGN-OUT */}
+      {!state.isAuthenticated && (
+        <button onClick={() => signIn()}>Sign in with Asgardeo</button>
+      )}
+
       {state.isAuthenticated && (
         <>
-          {loadingRoles ? (
-            <p>Loading your account…</p>
-          ) : roles.length > 0 ? (
-            <p>You're signed in with roles: {roles.join(", ")}</p>
-          ) : (
-            <p>You're signed in, but no roles are assigned.</p>
-          )}
-
-          <div style={{ display: "flex", gap: "12px", marginBottom: "16px" }}>
-            <button
-              onClick={() => {
-                setShowRiderForm(true);
-                setShowDriverForm(false);
-              }}
-            >
-              Add New Rider
-            </button>
-
-            <button
-              onClick={() => {
-                setShowDriverForm(true);
-                setShowRiderForm(false);
-              }}
-            >
-              Add New Driver
-            </button>
-          </div>
-
-          {/* Rider form inline on login page */}
-          {showRiderForm && (
-            <Form
-              rider={null}
-              onSubmit={handleRiderSubmit}
-              onCancel={() => setShowRiderForm(false)}
-            />
-          )}
-
-          {/* Driver form inline on login page */}
-          {showDriverForm && (
-            <DriverForm
-              driver={null}
-              onSubmit={handleDriverSubmit}
-              onCancel={() => setShowDriverForm(false)}
-            />
-          )}
-
-          <button style={{ marginTop: "24px" }} onClick={() => signOut()}>
-            Sign out
-          </button>
+          {!loadingRoles && <p>Roles: {roles.join(", ") || "None"}</p>}
+          <button onClick={() => signOut()}>Sign out</button>
         </>
       )}
     </div>
