@@ -388,7 +388,7 @@ app.get('/api/riders', async (req, res) => {
     try {
         const riders = await Rider.findAll({
             where: {
-                rider_status: 'active'
+                rider_status: 'Active'
             },
             order: [['RiderID', 'ASC']]
         });
