@@ -29,7 +29,7 @@ const DriverPage: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/drivers`);
+      const response = await fetch(`${API_BASE_URL}/api/driver`);
       if (!response.ok) {
         throw new Error('Failed to fetch drivers');
       }
@@ -47,7 +47,7 @@ const DriverPage: React.FC = () => {
     setIsLoadingTrips(true);
     setError(null);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/trips/status/Requested`);
+      const response = await fetch(`${API_BASE_URL}/api/trip/status/Requested`);
       if (!response.ok) {
         throw new Error('Failed to fetch requested trips');
       }
