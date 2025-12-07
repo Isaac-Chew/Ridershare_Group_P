@@ -211,12 +211,6 @@ const RiderPage: React.FC = () => {
     }
   };
 
-  // Handle add button click
-  const handleAdd = () => {
-    setEditingRider(null);
-    setShowForm(true);
-  };
-
   // Handle form cancel
   const handleCancel = () => {
     setShowForm(false);
@@ -416,20 +410,6 @@ const RiderPage: React.FC = () => {
           <h2 style={{ margin: 0, color: '#1f2937', fontWeight: 600 }}>Riders Management</h2>
         </div>
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-          {!showForm && (
-            <button 
-              onClick={handleAdd} 
-              style={buttonStyle}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#2563eb';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#3b82f6';
-              }}
-            >
-              Add New Rider
-            </button>
-          )}
           <button 
             onClick={() => signOut()} 
             style={{
