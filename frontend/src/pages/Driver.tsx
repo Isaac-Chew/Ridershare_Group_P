@@ -22,6 +22,10 @@ const DriverPage: React.FC = () => {
   const [trips, setTrips] = useState<Trip[]>([]);
   const [isLoadingTrips, setIsLoadingTrips] = useState(false);
   
+  // Ride History state
+  const [rideHistory, setRideHistory] = useState<Trip[]>([]);
+  const [isLoadingRideHistory, setIsLoadingRideHistory] = useState(false);
+  
   // Filter drivers to only show those matching the current user's email
   const filteredDrivers = email 
     ? drivers.filter(driver => driver.Email.toLowerCase() === email.toLowerCase())
@@ -63,6 +67,31 @@ const DriverPage: React.FC = () => {
     }
   };
 
+  const fetchRideHistory = async () => {
+    if (!email) return;
+    
+    setIsLoadingRideHistory(true);
+    setError(null);
+    try {
+      // Fetch trips by driver ID
+      const response = await fetch(`${API_BASE_URL}/api/trip/driver/${encodeURIComponent(email)}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch ride history');
+      }
+      const data = await response.json();
+      // Filter to only show InProgress or Completed trips
+      const filteredTrips = (data.trips || []).filter(
+        (trip: Trip) => trip.RideStatus === 'InProgress' || trip.RideStatus === 'Completed'
+      );
+      setRideHistory(filteredTrips);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      console.error('Error fetching ride history:', err);
+    } finally {
+      setIsLoadingRideHistory(false);
+    }
+  };
+
   const handleAcceptTrip = async (trip: Trip) => {
     if (!window.confirm(`Accept this ride from ${trip.PickUpLocation} to ${trip.DropOffLocation}?`)) {
       return;
@@ -92,9 +121,38 @@ const DriverPage: React.FC = () => {
 
       // Refresh the trips list to remove the accepted trip
       await fetchRequestedTrips();
+      // Refresh ride history to show the newly accepted trip
+      await fetchRideHistory();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
       console.error('Error accepting trip:', err);
+    }
+  };
+
+  const handleMarkDone = async (trip: Trip) => {
+    if (!window.confirm(`Mark this ride from ${trip.PickUpLocation} to ${trip.DropOffLocation} as completed?`)) {
+      return;
+    }
+    
+    try {
+      setError(null);
+      const response = await fetch(`${API_BASE_URL}/api/trip/${trip.RideID}/complete`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to mark trip as completed');
+      }
+
+      // Refresh the ride history to show updated status
+      await fetchRideHistory();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      console.error('Error marking trip as done:', err);
     }
   };
 
@@ -102,8 +160,9 @@ const DriverPage: React.FC = () => {
     if (!authLoading && isDriver) {
       fetchDrivers();
       fetchRequestedTrips();
+      fetchRideHistory();
     }
-  }, [authLoading, isDriver]);
+  }, [authLoading, isDriver, email]);
 
   const handleFormSubmit = async (formData: DriverFormData) => {
     try {
@@ -327,16 +386,29 @@ const DriverPage: React.FC = () => {
             )}
             
             {isDriver && (
-              <div style={{ marginTop: '40px' }}>
-                <h3 style={{ marginBottom: '20px', color: '#1f2937', fontWeight: 600 }}>
-                  Available Rides (Requested)
-                </h3>
-                <TripsTable
-                  data={trips}
-                  isLoading={isLoadingTrips}
-                  onAccept={handleAcceptTrip}
-                />
-              </div>
+              <>
+                <div style={{ marginTop: '40px' }}>
+                  <h3 style={{ marginBottom: '20px', color: '#1f2937', fontWeight: 600 }}>
+                    Available Rides (Requested)
+                  </h3>
+                  <TripsTable
+                    data={trips}
+                    isLoading={isLoadingTrips}
+                    onAccept={handleAcceptTrip}
+                  />
+                </div>
+                
+                <div style={{ marginTop: '40px' }}>
+                  <h3 style={{ marginBottom: '20px', color: '#1f2937', fontWeight: 600 }}>
+                    Ride History
+                  </h3>
+                  <TripsTable
+                    data={rideHistory}
+                    isLoading={isLoadingRideHistory}
+                    onMarkDone={handleMarkDone}
+                  />
+                </div>
+              </>
             )}
           </>
         )}

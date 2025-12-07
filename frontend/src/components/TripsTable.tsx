@@ -11,6 +11,7 @@ interface TripsTableProps {
   data: Trip[];
   isLoading?: boolean;
   onAccept?: (trip: Trip) => void;
+  onMarkDone?: (trip: Trip) => void;
 }
 
 const statusColors: Record<RideStatus, string> = {
@@ -39,7 +40,7 @@ function StatusBadge({ status }: { status: RideStatus }) {
   );
 }
 
-function TripsTable({ data, isLoading = false, onAccept }: TripsTableProps) {
+function TripsTable({ data, isLoading = false, onAccept, onMarkDone }: TripsTableProps) {
   const columns: TableColumn<Trip>[] = [
     { key: 'RideID', label: 'Ride ID' },
     { key: 'PickUpLocation', label: 'Pick Up Location' },
@@ -93,7 +94,7 @@ function TripsTable({ data, isLoading = false, onAccept }: TripsTableProps) {
                 {column.label}
               </th>
             ))}
-            {onAccept && (
+            {(onAccept || onMarkDone) && (
               <th
                 style={{
                   padding: '16px',
@@ -115,7 +116,7 @@ function TripsTable({ data, isLoading = false, onAccept }: TripsTableProps) {
           {data.length === 0 ? (
             <tr>
               <td 
-                colSpan={columns.length + (onAccept ? 1 : 0)} 
+                colSpan={columns.length + ((onAccept || onMarkDone) ? 1 : 0)} 
                 style={{ 
                   padding: '40px', 
                   textAlign: 'center', 
@@ -155,9 +156,9 @@ function TripsTable({ data, isLoading = false, onAccept }: TripsTableProps) {
                       : String(row[column.key] ?? '')}
                   </td>
                 ))}
-                {onAccept && (
+                {(onAccept || onMarkDone) && (
                   <td style={{ padding: '16px' }}>
-                    {row.RideStatus === 'Requested' ? (
+                    {onAccept && row.RideStatus === 'Requested' && (
                       <button
                         onClick={() => onAccept(row)}
                         style={{
@@ -180,7 +181,33 @@ function TripsTable({ data, isLoading = false, onAccept }: TripsTableProps) {
                       >
                         Accept
                       </button>
-                    ) : (
+                    )}
+                    {onMarkDone && row.RideStatus === 'InProgress' && (
+                      <button
+                        onClick={() => onMarkDone(row)}
+                        style={{
+                          padding: '8px 16px',
+                          backgroundColor: '#10b981',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '6px',
+                          cursor: 'pointer',
+                          fontSize: '14px',
+                          fontWeight: 500,
+                          transition: 'background-color 0.2s',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = '#059669';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = '#10b981';
+                        }}
+                      >
+                        Mark done
+                      </button>
+                    )}
+                    {(!onAccept || row.RideStatus !== 'Requested') && 
+                     (!onMarkDone || row.RideStatus !== 'InProgress') && (
                       <span style={{ color: '#64748b', fontSize: '12px' }}>No actions</span>
                     )}
                   </td>
