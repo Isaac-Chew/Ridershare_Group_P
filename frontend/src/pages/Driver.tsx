@@ -262,11 +262,6 @@ const DriverPage: React.FC = () => {
     }
   };
 
-  const handleAdd = () => {
-    setEditingDriver(null);
-    setShowForm(true);
-  };
-
   const handleCancel = () => {
     setShowForm(false);
     setEditingDriver(null);
@@ -357,16 +352,6 @@ const DriverPage: React.FC = () => {
           <h2 style={{ margin: 0, color: '#1f2937', fontWeight: 600 }}>Drivers Management</h2>
         </div>
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-          {!showForm && (
-            <button 
-              onClick={handleAdd} 
-              style={buttonStyle}
-              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#2563eb'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#3b82f6'; }}
-            >
-              Add New Driver
-            </button>
-          )}
           <button 
             onClick={() => signOut()} 
             style={{
