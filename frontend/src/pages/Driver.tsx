@@ -356,16 +356,29 @@ const DriverPage: React.FC = () => {
           <div style={{ height: '32px', width: '1px', backgroundColor: '#e5e7eb' }} />
           <h2 style={{ margin: 0, color: '#1f2937', fontWeight: 600 }}>Drivers Management</h2>
         </div>
-        {!showForm && (
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          {!showForm && (
+            <button 
+              onClick={handleAdd} 
+              style={buttonStyle}
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#2563eb'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#3b82f6'; }}
+            >
+              Add New Driver
+            </button>
+          )}
           <button 
-            onClick={handleAdd} 
-            style={buttonStyle}
-            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#2563eb'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#3b82f6'; }}
+            onClick={() => signOut()} 
+            style={{
+              ...buttonStyle,
+              backgroundColor: '#6b7280',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#4b5563'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#6b7280'; }}
           >
-            Add New Driver
+            Sign Out
           </button>
-        )}
+        </div>
       </div>
 
 
