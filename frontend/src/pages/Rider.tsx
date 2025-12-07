@@ -3,17 +3,24 @@ import Table from '../components/Table';
 import Form from '../components/Form';
 import Logo from '../components/Logo';
 import { Rider, RiderFormData } from '../types';
+import { useAuth } from '../hooks/useAuth';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
 
 
 const RiderPage: React.FC = () => {
+  const { email, isRider, isLoading: authLoading } = useAuth();
   const [riders, setRiders] = useState<Rider[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingRider, setEditingRider] = useState<Rider | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Filter riders to only show those matching the current user's email
+  const filteredRiders = email 
+    ? riders.filter(rider => rider.Email.toLowerCase() === email.toLowerCase())
+    : [];
 
   // Fetch all riders
   const fetchRiders = async () => {
@@ -35,8 +42,10 @@ const RiderPage: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchRiders();
-  }, []);
+    if (!authLoading && isRider) {
+      fetchRiders();
+    }
+  }, [authLoading, isRider]);
 
   // Handle form submission (create or update)
   const handleFormSubmit = async (formData: RiderFormData) => {
@@ -269,13 +278,26 @@ const RiderPage: React.FC = () => {
             onCancel={handleCancel}
           />
         ) : (
-          <Table
-            data={riders}
-            columns={columns}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            isLoading={isLoading}
-          />
+          <>
+            {!isRider ? (
+              <div style={{ 
+                padding: '40px', 
+                textAlign: 'center', 
+                color: '#64748b',
+                fontSize: '16px' 
+              }}>
+                You do not have permission to view this page. Rider role required.
+              </div>
+            ) : (
+              <Table
+                data={filteredRiders}
+                columns={columns}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                isLoading={isLoading || authLoading}
+              />
+            )}
+          </>
         )}
       </div>
     </div>
