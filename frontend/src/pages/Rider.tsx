@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import Table from '../components/Table';
 import Form from '../components/Form';
+import TripForm from '../components/TripForm';
+import TripsTable from '../components/TripsTable';
 import Logo from '../components/Logo';
-import { Rider, RiderFormData } from '../types';
+import { Rider, RiderFormData, Trip } from '../types';
 import { useAuth } from '../hooks/useAuth';
 import { useAuthContext } from '@asgardeo/auth-react';
 
@@ -16,6 +18,13 @@ const RiderPage: React.FC = () => {
   const [showForm, setShowForm] = useState(false);
   const [editingRider, setEditingRider] = useState<Rider | null>(null);
   const [error, setError] = useState<string | null>(null);
+  
+  // Trip-related state
+  const [showTripForm, setShowTripForm] = useState(false);
+  const [requestedTrips, setRequestedTrips] = useState<Trip[]>([]);
+  const [isLoadingRequestedTrips, setIsLoadingRequestedTrips] = useState(false);
+  const [rideHistory, setRideHistory] = useState<Trip[]>([]);
+  const [isLoadingRideHistory, setIsLoadingRideHistory] = useState(false);
 
   // Filter riders to only show those matching the current user's email
   const filteredRiders = email 
@@ -41,11 +50,78 @@ const RiderPage: React.FC = () => {
     }
   };
 
+  const fetchRequestedTrips = async () => {
+    if (!email) return;
+    
+    setIsLoadingRequestedTrips(true);
+    setError(null);
+    try {
+      // Fetch trips by status (similar to Driver page)
+      const response = await fetch(`${API_BASE_URL}/api/trip/status/Requested`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch requested trips');
+      }
+      const data = await response.json();
+      // Filter to only show trips for the current rider
+      const filteredTrips = (data.trips || []).filter(
+        (trip: Trip) => trip.RiderID && trip.RiderID.toLowerCase() === email.toLowerCase()
+      );
+      setRequestedTrips(filteredTrips);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      console.error('Error fetching requested trips:', err);
+    } finally {
+      setIsLoadingRequestedTrips(false);
+    }
+  };
+
+  const fetchRideHistory = async () => {
+    if (!email) return;
+    
+    setIsLoadingRideHistory(true);
+    setError(null);
+    try {
+      // Fetch trips by status (similar to Driver page)
+      // Get both InProgress and Completed trips, then filter by rider email
+      const [inProgressResponse, completedResponse] = await Promise.all([
+        fetch(`${API_BASE_URL}/api/trip/status/InProgress`),
+        fetch(`${API_BASE_URL}/api/trip/status/Completed`)
+      ]);
+
+      if (!inProgressResponse.ok || !completedResponse.ok) {
+        throw new Error('Failed to fetch ride history');
+      }
+
+      const inProgressData = await inProgressResponse.json();
+      const completedData = await completedResponse.json();
+
+      // Combine both arrays and filter by rider email
+      const allTrips = [
+        ...(inProgressData.trips || []),
+        ...(completedData.trips || [])
+      ];
+
+      // Filter to only show trips for the current rider
+      const filteredTrips = allTrips.filter(
+        (trip: Trip) => trip.RiderID && trip.RiderID.toLowerCase() === email.toLowerCase()
+      );
+
+      setRideHistory(filteredTrips);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      console.error('Error fetching ride history:', err);
+    } finally {
+      setIsLoadingRideHistory(false);
+    }
+  };
+
   useEffect(() => {
     if (!authLoading && isRider) {
       fetchRiders();
+      fetchRequestedTrips();
+      fetchRideHistory();
     }
-  }, [authLoading, isRider]);
+  }, [authLoading, isRider, email]);
 
   // Handle form submission (create or update)
   const handleFormSubmit = async (formData: RiderFormData) => {
@@ -145,6 +221,45 @@ const RiderPage: React.FC = () => {
   const handleCancel = () => {
     setShowForm(false);
     setEditingRider(null);
+  };
+
+  // Handle trip form submission
+  const handleTripSubmit = async (tripData: Partial<Trip>) => {
+    if (!email) {
+      setError('Rider email not found');
+      return;
+    }
+
+    try {
+      setError(null);
+      const response = await fetch(`${API_BASE_URL}/api/trip`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...tripData,
+          RiderID: email, // Ensure we use the authenticated rider's email
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create trip');
+      }
+
+      // Close form and refresh trips
+      setShowTripForm(false);
+      await fetchRequestedTrips();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      console.error('Error creating trip:', err);
+    }
+  };
+
+  // Handle trip form cancel
+  const handleTripCancel = () => {
+    setShowTripForm(false);
   };
 
   // Define table columns
@@ -284,7 +399,14 @@ const RiderPage: React.FC = () => {
       <div style={contentStyle}>
         {error && <div style={errorStyle}>{error}</div>}
 
-        {showForm ? (
+        {showTripForm ? (
+          <TripForm
+            trip={null}
+            riderId={email || ''}
+            onSubmit={handleTripSubmit}
+            onCancel={handleTripCancel}
+          />
+        ) : showForm ? (
           <Form
             rider={editingRider}
             onSubmit={handleFormSubmit}
@@ -302,13 +424,54 @@ const RiderPage: React.FC = () => {
                 You do not have permission to view this page. Rider role required.
               </div>
             ) : (
-              <Table
-                data={filteredRiders}
-                columns={columns}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-                isLoading={isLoading || authLoading}
-              />
+              <>
+                <Table
+                  data={filteredRiders}
+                  columns={columns}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                  isLoading={isLoading || authLoading}
+                />
+                
+                <div style={{ marginTop: '40px' }}>
+                  <div style={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center',
+                    marginBottom: '20px'
+                  }}>
+                    <h3 style={{ margin: 0, color: '#1f2937', fontWeight: 600 }}>
+                      Requested Rides
+                    </h3>
+                    <button 
+                      onClick={() => setShowTripForm(true)} 
+                      style={buttonStyle}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = '#2563eb';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = '#3b82f6';
+                      }}
+                    >
+                      Request a New Ride
+                    </button>
+                  </div>
+                  <TripsTable
+                    data={requestedTrips}
+                    isLoading={isLoadingRequestedTrips}
+                  />
+                </div>
+                
+                <div style={{ marginTop: '40px' }}>
+                  <h3 style={{ marginBottom: '20px', color: '#1f2937', fontWeight: 600 }}>
+                    Ride History
+                  </h3>
+                  <TripsTable
+                    data={rideHistory}
+                    isLoading={isLoadingRideHistory}
+                  />
+                </div>
+              </>
             )}
           </>
         )}

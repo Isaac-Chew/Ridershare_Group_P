@@ -3,7 +3,7 @@ import { Trip } from '../types';
 
 interface TripFormProps {
   trip?: Partial<Trip> | null;
-  riderId: number; // RiderID passed via prop or context upstream
+  riderId: string; // RiderID (email) passed via prop or context upstream
   onSubmit: (data: Partial<Trip>) => void;
   onCancel: () => void;
 }
