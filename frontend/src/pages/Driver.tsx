@@ -7,7 +7,9 @@ import { Driver, DriverFormData, Trip } from '../types';
 import { useAuth } from '../hooks/useAuth';
 
 // Use relative URL in development to leverage Vite proxy, or env variable in production
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+// If VITE_API_BASE_URL is not set, use empty string for relative URLs (works with Vite proxy in dev)
+// In production, VITE_API_BASE_URL should be set to the full backend URL (e.g., https://ridershare-group-p.onrender.com)
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 const DriverPage: React.FC = () => {
   const { email, isDriver, isLoading: authLoading } = useAuth();
@@ -30,13 +32,22 @@ const DriverPage: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const url = `${API_BASE_URL}/api/drivers`;
+      // Construct URL - if API_BASE_URL is empty, use relative URL (works with Vite proxy)
+      const url = API_BASE_URL ? `${API_BASE_URL}/api/drivers` : '/api/drivers';
       console.log('Fetching drivers from:', url);
+      console.log('API_BASE_URL env var:', import.meta.env.VITE_API_BASE_URL || 'not set (using relative URL)');
+      
       const response = await fetch(url);
       
       if (!response.ok) {
         const errorText = await response.text();
         console.error('API Error Response:', errorText);
+        console.error('Response status:', response.status, response.statusText);
+        console.error('Response URL:', response.url);
+        
+        if (response.status === 404) {
+          throw new Error(`API endpoint not found (404). Please verify the backend is deployed and running. Attempted URL: ${url}`);
+        }
         throw new Error(`Failed to fetch drivers: ${response.status} ${response.statusText}`);
       }
       
@@ -46,7 +57,7 @@ const DriverPage: React.FC = () => {
       setDrivers(allDrivers);
       
       if (allDrivers.length === 0) {
-        console.warn('No drivers returned from API');
+        console.warn('No drivers returned from API (empty array)');
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An error occurred';
@@ -61,14 +72,29 @@ const DriverPage: React.FC = () => {
     setIsLoadingTrips(true);
     setError(null);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/trips/status/Requested`);
+      // Construct URL - if API_BASE_URL is empty, use relative URL (works with Vite proxy)
+      const url = API_BASE_URL ? `${API_BASE_URL}/api/trips/status/Requested` : '/api/trips/status/Requested';
+      console.log('Fetching requested trips from:', url);
+      
+      const response = await fetch(url);
+      
       if (!response.ok) {
-        throw new Error('Failed to fetch requested trips');
+        const errorText = await response.text();
+        console.error('Trips API Error Response:', errorText);
+        console.error('Response status:', response.status, response.statusText);
+        
+        if (response.status === 404) {
+          throw new Error(`API endpoint not found (404). Please verify the backend is deployed and running. Attempted URL: ${url}`);
+        }
+        throw new Error(`Failed to fetch requested trips: ${response.status} ${response.statusText}`);
       }
+      
       const data = await response.json();
+      console.log('Trips API response:', data);
       setTrips(data.trips || []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred';
+      setError(errorMessage);
       console.error('Error fetching requested trips:', err);
     } finally {
       setIsLoadingTrips(false);
