@@ -257,12 +257,12 @@ const Trip = sequelize.define('Trip', {
         field: "ridestatus"
     },
     RiderID: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.STRING(100),
         allowNull: true,
         field: "riderid"
     },
     DriverID: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.STRING(100),
         allowNull: true,
         field: "driverid"
     }
@@ -848,21 +848,20 @@ app.get('/api/trip', async (req, res) => {
     }
 });
 
-// GET trips by RiderID
+// GET trips by RiderID (email)
 app.get('/api/trip/rider/:RiderID', async (req, res) => {
     try {
         const { RiderID } = req.params;
-        const riderIdInt = parseInt(RiderID);
 
-        if (isNaN(riderIdInt)) {
+        if (!RiderID || RiderID.trim() === '') {
             return res.status(400).json({ 
-                error: 'Invalid rider ID' 
+                error: 'Invalid rider email' 
             });
         }
 
         const trips = await Trip.findAll({
             where: {
-                RiderID: riderIdInt
+                RiderID: RiderID
             },
             order: [['RideID', 'ASC']]
         });
@@ -876,21 +875,20 @@ app.get('/api/trip/rider/:RiderID', async (req, res) => {
     }
 });
 
-// GET trips by DriverID
+// GET trips by DriverID (email)
 app.get('/api/trip/driver/:DriverID', async (req, res) => {
     try {
         const { DriverID } = req.params;
-        const driverIdInt = parseInt(DriverID);
 
-        if (isNaN(driverIdInt)) {
+        if (!DriverID || DriverID.trim() === '') {
             return res.status(400).json({ 
-                error: 'Invalid driver ID' 
+                error: 'Invalid driver email' 
             });
         }
 
         const trips = await Trip.findAll({
             where: {
-                DriverID: driverIdInt
+                DriverID: DriverID
             },
             order: [['RideID', 'ASC']]
         });
@@ -938,9 +936,9 @@ app.put('/api/trip/:id/accept', async (req, res) => {
             });
         }
 
-        if (!DriverID) {
+        if (!DriverID || DriverID.trim() === '') {
             return res.status(400).json({ 
-                error: 'DriverID is required' 
+                error: 'Driver email is required' 
             });
         }
 
@@ -960,13 +958,13 @@ app.put('/api/trip/:id/accept', async (req, res) => {
         }
 
         // Validate that trip doesn't already have a driver
-        if (trip.DriverID !== null) {
+        if (trip.DriverID !== null && trip.DriverID !== '') {
             return res.status(400).json({ 
                 error: 'Trip has already been accepted by another driver' 
             });
         }
 
-        // Update trip: set DriverID and change status to InProgress
+        // Update trip: set DriverID (email) and change status to InProgress
         await trip.update({ 
             DriverID: DriverID,
             RideStatus: 'InProgress'

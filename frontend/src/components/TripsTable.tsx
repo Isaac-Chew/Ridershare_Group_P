@@ -48,8 +48,8 @@ function TripsTable({ data, isLoading = false, onAccept }: TripsTableProps) {
     { key: 'Fare', label: 'Fare', render: (v) => `$${Number(v ?? 0).toFixed(2)}` },
     { key: 'Tip', label: 'Tip', render: (v) => `$${Number(v ?? 0).toFixed(2)}` },
     { key: 'RideStatus', label: 'Status', render: (v) => <StatusBadge status={v as RideStatus} /> },
-    { key: 'RiderID', label: 'Rider ID' },
-    { key: 'DriverID', label: 'Driver ID', render: (v) => (v == null ? '-' : String(v)) },
+    { key: 'RiderID', label: 'Rider Email' },
+    { key: 'DriverID', label: 'Driver Email', render: (v) => (v == null ? '-' : String(v)) },
   ];
 
   if (isLoading) {
