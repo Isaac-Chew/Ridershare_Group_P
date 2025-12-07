@@ -1,14 +1,23 @@
+// src/pages/Login.tsx
+import React, { useEffect, useState } from "react";
 import { useAuthContext } from "@asgardeo/auth-react";
-import { useEffect, useState } from "react";
-import { Navigate } from "react-router-dom";
+import Form from "../components/Form";
+import DriverForm from "../components/DriverForm";
+import { RiderFormData, DriverFormData } from "../types";
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
 
 const Login: React.FC = () => {
-  const { state, signIn, getDecodedIDToken } = useAuthContext();
+  const { state, signIn, signOut, getDecodedIDToken } = useAuthContext();
+
   const [roles, setRoles] = useState<string[]>([]);
   const [loadingRoles, setLoadingRoles] = useState(true);
 
+  const [showRiderForm, setShowRiderForm] = useState(false);
+  const [showDriverForm, setShowDriverForm] = useState(false);
+
   // Load roles whenever user becomes authenticated
-    useEffect(() => {
+  useEffect(() => {
     const loadRoles = async () => {
       if (!state.isAuthenticated) {
         setRoles([]);
@@ -18,9 +27,9 @@ const Login: React.FC = () => {
 
       try {
         const payload: any = await getDecodedIDToken();
-        
-        // Delete this line after debugging
-        console.log("ID token payload:", payload);  
+
+        // Debugging – see what comes back from Asgardeo
+        console.log("ID token payload:", payload);
 
         const tokenRoles: string[] =
           (payload?.roles as string[]) ||
@@ -39,23 +48,115 @@ const Login: React.FC = () => {
     loadRoles();
   }, [state.isAuthenticated, getDecodedIDToken]);
 
-  // Auto-redirect based on role
-  if (state.isAuthenticated && !loadingRoles) {
-    if (roles.includes("rider")) return <Navigate to="/rider" replace />;
-    if (roles.includes("driver")) return <Navigate to="/driver" replace />;
+  // Create rider directly from Login page
+  const handleRiderSubmit = async (data: RiderFormData) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/riders`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
 
-    // no role found:
-    return <p>No role assigned. Contact admin.</p>;
-  }
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.error || "Failed to create rider");
+      }
+
+      alert("Rider created successfully");
+      setShowRiderForm(false);
+    } catch (err) {
+      console.error("Error creating rider from login:", err);
+      alert(err instanceof Error ? err.message : "Failed to create rider");
+    }
+  };
+
+  // Create driver directly from Login page
+  const handleDriverSubmit = async (data: DriverFormData) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/driver`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.error || "Failed to create driver");
+      }
+
+      alert("Driver created successfully");
+      setShowDriverForm(false);
+    } catch (err) {
+      console.error("Error creating driver from login:", err);
+      alert(err instanceof Error ? err.message : "Failed to create driver");
+    }
+  };
 
   return (
     <div className="App">
       <h1>Rideshare Login</h1>
 
+      {/* Not signed in – just show sign-in button */}
       {!state.isAuthenticated && (
         <>
           <p>Please sign in to continue.</p>
           <button onClick={() => signIn()}>Sign in with Asgardeo</button>
+        </>
+      )}
+
+      {/* Signed in – show role info, add buttons, and forms */}
+      {state.isAuthenticated && (
+        <>
+          {loadingRoles ? (
+            <p>Loading your account…</p>
+          ) : roles.length > 0 ? (
+            <p>You're signed in with roles: {roles.join(", ")}</p>
+          ) : (
+            <p>You're signed in, but no roles are assigned.</p>
+          )}
+
+          {/* Buttons to show forms (no redirect) */}
+          <div style={{ display: "flex", gap: "12px", marginBottom: "16px" }}>
+            <button
+              onClick={() => {
+                setShowRiderForm(true);
+                setShowDriverForm(false);
+              }}
+            >
+              Add New Rider
+            </button>
+
+            <button
+              onClick={() => {
+                setShowDriverForm(true);
+                setShowRiderForm(false);
+              }}
+            >
+              Add New Driver
+            </button>
+          </div>
+
+          {/* Rider form pops up here */}
+          {showRiderForm && (
+            <Form
+              rider={null}
+              onSubmit={handleRiderSubmit}
+              onCancel={() => setShowRiderForm(false)}
+            />
+          )}
+
+          {/* Driver form pops up here */}
+          {showDriverForm && (
+            <DriverForm
+              driver={null}
+              onSubmit={handleDriverSubmit}
+              onCancel={() => setShowDriverForm(false)}
+            />
+          )}
+
+          <button style={{ marginTop: "24px" }} onClick={() => signOut()}>
+            Sign out
+          </button>
         </>
       )}
     </div>
