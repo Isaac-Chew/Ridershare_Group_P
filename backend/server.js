@@ -982,6 +982,48 @@ app.put('/api/trip/:id/accept', async (req, res) => {
     }
 });
 
+// PUT update trip status to Completed
+app.put('/api/trip/:id/complete', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const tripIdInt = parseInt(id);
+
+        if (isNaN(tripIdInt)) {
+            return res.status(400).json({ 
+                error: 'Invalid trip ID' 
+            });
+        }
+
+        const trip = await Trip.findByPk(tripIdInt);
+
+        if (!trip) {
+            return res.status(404).json({ 
+                error: 'Trip not found' 
+            });
+        }
+
+        // Validate that trip is in InProgress status
+        if (trip.RideStatus !== 'InProgress') {
+            return res.status(400).json({ 
+                error: 'Only trips with status "InProgress" can be marked as completed' 
+            });
+        }
+
+        // Update trip status to Completed
+        await trip.update({ RideStatus: 'Completed' });
+
+        res.status(200).json({
+            message: 'Trip marked as completed successfully',
+            trip
+        });
+    } catch (err) {
+        console.error('Error completing trip:', err);
+        res.status(500).json({ 
+            error: 'Failed to complete trip' 
+        });
+    }
+});
+
 // DELETE trip (soft delete by setting RideStatus to Cancelled)
 app.delete('/api/trip/:id', async (req, res) => {
     try {
