@@ -4,11 +4,13 @@ import DriverTable from '../components/DriverTable';
 import TripsTable from '../components/TripsTable';
 import Form from '../components/Form';
 import { Driver, DriverFormData, Trip } from '../types';
+import { useAuth } from '../hooks/useAuth';
 
 // Use relative URL in development to leverage Vite proxy, or env variable in production
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
 const DriverPage: React.FC = () => {
+  const { email, isDriver, isLoading: authLoading } = useAuth();
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
@@ -19,21 +21,36 @@ const DriverPage: React.FC = () => {
   const [trips, setTrips] = useState<Trip[]>([]);
   const [isLoadingTrips, setIsLoadingTrips] = useState(false);
   
-  // Placeholder driver ID - will be replaced with actual auth later
-  const currentDriverId = 1;
+  // Filter drivers to only show those matching the current user's email
+  const filteredDrivers = email 
+    ? drivers.filter(driver => driver.Email.toLowerCase() === email.toLowerCase())
+    : [];
 
   const fetchDrivers = async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/drivers`);
+      const url = `${API_BASE_URL}/api/drivers`;
+      console.log('Fetching drivers from:', url);
+      const response = await fetch(url);
+      
       if (!response.ok) {
-        throw new Error('Failed to fetch drivers');
+        const errorText = await response.text();
+        console.error('API Error Response:', errorText);
+        throw new Error(`Failed to fetch drivers: ${response.status} ${response.statusText}`);
       }
+      
       const data = await response.json();
-      setDrivers(data.drivers || []);
+      console.log('Drivers API response:', data);
+      const allDrivers = data.drivers || [];
+      setDrivers(allDrivers);
+      
+      if (allDrivers.length === 0) {
+        console.warn('No drivers returned from API');
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred';
+      setError(errorMessage);
       console.error('Error fetching drivers:', err);
     } finally {
       setIsLoading(false);
@@ -71,7 +88,7 @@ const DriverPage: React.FC = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          DriverID: currentDriverId
+          DriverID: filteredDrivers[0]?.DriverID || null
         }),
       });
 
@@ -89,9 +106,11 @@ const DriverPage: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchDrivers();
-    fetchRequestedTrips();
-  }, []);
+    if (!authLoading && isDriver) {
+      fetchDrivers();
+      fetchRequestedTrips();
+    }
+  }, [authLoading, isDriver]);
 
   const handleFormSubmit = async (formData: DriverFormData) => {
     try {
@@ -294,24 +313,37 @@ const DriverPage: React.FC = () => {
           />
         ) : (
           <>
-            <DriverTable
-              data={drivers}
-              columns={columns}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-              isLoading={isLoading}
-            />
-            
-            <div style={{ marginTop: '40px' }}>
-              <h3 style={{ marginBottom: '20px', color: '#1f2937', fontWeight: 600 }}>
-                Available Rides (Requested)
-              </h3>
-              <TripsTable
-                data={trips}
-                isLoading={isLoadingTrips}
-                onAccept={handleAcceptTrip}
+            {!isDriver ? (
+              <div style={{ 
+                padding: '40px', 
+                textAlign: 'center', 
+                color: '#64748b',
+                fontSize: '16px' 
+              }}>
+                You do not have permission to view this page. Driver role required.
+              </div>
+            ) : (
+              <DriverTable
+                data={filteredDrivers}
+                columns={columns}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                isLoading={isLoading || authLoading}
               />
-            </div>
+            )}
+            
+            {isDriver && (
+              <div style={{ marginTop: '40px' }}>
+                <h3 style={{ marginBottom: '20px', color: '#1f2937', fontWeight: 600 }}>
+                  Available Rides (Requested)
+                </h3>
+                <TripsTable
+                  data={trips}
+                  isLoading={isLoadingTrips}
+                  onAccept={handleAcceptTrip}
+                />
+              </div>
+            )}
           </>
         )}
       </div>
