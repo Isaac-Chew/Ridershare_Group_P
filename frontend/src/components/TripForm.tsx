@@ -50,18 +50,34 @@ const TripForm: React.FC<TripFormProps> = ({ trip, riderId, onSubmit, onCancel }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Ensure RiderID is set from riderId prop (which should be the email)
+    if (!riderId || riderId.trim() === '') {
+      setErrors({ PickUpLocation: 'Rider ID is required. Please refresh the page.' });
+      return;
+    }
+
     if (!validate()) return;
 
     const payload: Partial<Trip> = {
-      PickUpLocation: String(formData.PickUpLocation || ''),
-      DropOffLocation: String(formData.DropOffLocation || ''),
+      PickUpLocation: String(formData.PickUpLocation || '').trim(),
+      DropOffLocation: String(formData.DropOffLocation || '').trim(),
       EstimatedTime: Number(formData.EstimatedTime || 0),
       Fare: Number(formData.Fare || 0),
       Tip: Number(formData.Tip || 0),
-      RiderID: riderId,
+      RiderID: riderId.trim(),
       DriverID: formData.DriverID ?? null,
       // RideStatus is always set to 'Requested' by the backend for new trips
     };
+
+    // Double-check required fields before submitting
+    if (!payload.PickUpLocation || !payload.DropOffLocation || !payload.RiderID) {
+      setErrors({ 
+        PickUpLocation: !payload.PickUpLocation ? 'Pickup location is required' : undefined,
+        DropOffLocation: !payload.DropOffLocation ? 'Dropoff location is required' : undefined
+      });
+      return;
+    }
 
     onSubmit(payload);
   };
@@ -70,7 +86,9 @@ const TripForm: React.FC<TripFormProps> = ({ trip, riderId, onSubmit, onCancel }
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: name === 'EstimatedTime' || name === 'Fare' || name === 'Tip' ? Number(value) : value,
+      [name]: name === 'EstimatedTime' || name === 'Fare' || name === 'Tip' 
+        ? (value === '' ? 0 : Number(value)) 
+        : value,
     }));
     if (errors[name as keyof typeof errors]) {
       setErrors((prev) => ({ ...prev, [name]: undefined }));
