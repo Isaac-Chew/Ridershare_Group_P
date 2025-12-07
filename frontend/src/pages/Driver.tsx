@@ -6,12 +6,12 @@ import Form from '../components/Form';
 import { Driver, DriverFormData, Trip } from '../types';
 import { useAuth } from '../hooks/useAuth';
 import { useAuthContext } from '@asgardeo/auth-react';
-const { signOut } = useAuthContext();
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
 const DriverPage: React.FC = () => {
   const { email, isDriver, isLoading: authLoading } = useAuth();
+  const { signOut } = useAuthContext();
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
@@ -277,19 +277,30 @@ const DriverPage: React.FC = () => {
           <div style={{ height: '32px', width: '1px', backgroundColor: '#e5e7eb' }} />
           <h2 style={{ margin: 0, color: '#1f2937', fontWeight: 600 }}>Drivers Management</h2>
         </div>
-        {!showForm && (
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          {!showForm && (
+            <button 
+              onClick={handleAdd} 
+              style={buttonStyle}
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#2563eb'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#3b82f6'; }}
+            >
+              Add New Driver
+            </button>
+          )}
           <button 
-            onClick={handleAdd} 
-            style={buttonStyle}
-            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#2563eb'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#3b82f6'; }}
+            onClick={() => signOut()} 
+            style={{
+              ...buttonStyle,
+              backgroundColor: '#6b7280',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#4b5563'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#6b7280'; }}
           >
-            Add New Driver
+            Sign Out
           </button>
-        )}
+        </div>
       </div>
-
-      <button onClick={() => signOut()}>Sign out</button>
 
 
       <div style={contentStyle}>

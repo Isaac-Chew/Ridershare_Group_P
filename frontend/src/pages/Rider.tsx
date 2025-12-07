@@ -5,12 +5,12 @@ import Logo from '../components/Logo';
 import { Rider, RiderFormData } from '../types';
 import { useAuth } from '../hooks/useAuth';
 import { useAuthContext } from '@asgardeo/auth-react';
-const { signOut } = useAuthContext();
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
 const RiderPage: React.FC = () => {
   const { email, isRider, isLoading: authLoading } = useAuth();
+  const { signOut } = useAuthContext();
   const [riders, setRiders] = useState<Rider[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
@@ -252,23 +252,34 @@ const RiderPage: React.FC = () => {
           <div style={{ height: '32px', width: '1px', backgroundColor: '#e5e7eb' }} />
           <h2 style={{ margin: 0, color: '#1f2937', fontWeight: 600 }}>Riders Management</h2>
         </div>
-        {!showForm && (
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          {!showForm && (
+            <button 
+              onClick={handleAdd} 
+              style={buttonStyle}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#2563eb';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#3b82f6';
+              }}
+            >
+              Add New Rider
+            </button>
+          )}
           <button 
-            onClick={handleAdd} 
-            style={buttonStyle}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#2563eb';
+            onClick={() => signOut()} 
+            style={{
+              ...buttonStyle,
+              backgroundColor: '#6b7280',
             }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = '#3b82f6';
-            }}
+            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#4b5563'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#6b7280'; }}
           >
-            Add New Rider
+            Sign Out
           </button>
-        )}
+        </div>
       </div>
-
-      <button onClick={() => signOut()}>Sign out</button>
 
       <div style={contentStyle}>
         {error && <div style={errorStyle}>{error}</div>}
