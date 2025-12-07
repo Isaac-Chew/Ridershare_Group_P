@@ -1,6 +1,7 @@
 // src/pages/Login.tsx
 import React, { useEffect, useState } from "react";
 import { useAuthContext } from "@asgardeo/auth-react";
+import { Navigate } from "react-router-dom";
 import Form from "../components/Form";
 import DriverForm from "../components/DriverForm";
 import { RiderFormData, DriverFormData } from "../types";
@@ -46,6 +47,24 @@ const Login: React.FC = () => {
 
     loadRoles();
   }, [state.isAuthenticated, getDecodedIDToken]);
+
+  // ===========================
+  // REDIRECT AFTER SIGN-IN (Asgardeo)
+  // ===========================
+  if (
+    state.isAuthenticated &&
+    !loadingRoles &&
+    !showRiderForm &&
+    !showDriverForm
+  ) {
+    if (roles.includes("rider")) {
+      return <Navigate to="/rider" replace />;
+    }
+    if (roles.includes("driver")) {
+      return <Navigate to="/driver" replace />;
+    }
+    // No role: stay on login and show the page below
+  }
 
   // ===========================
   // RIDER SUBMIT
@@ -102,7 +121,7 @@ const Login: React.FC = () => {
     <div className="App">
       <h1>Rideshare Login</h1>
 
-      {/* BUTTONS SHOW EVEN WHEN NOT AUTHENTICATED */}
+      {/* Buttons ALWAYS visible */}
       <div style={{ display: "flex", gap: "12px", marginBottom: "16px" }}>
         <button
           onClick={() => {
@@ -123,7 +142,7 @@ const Login: React.FC = () => {
         </button>
       </div>
 
-      {/* RIDER FORM POPUP */}
+      {/* Rider form on login page */}
       {showRiderForm && (
         <Form
           rider={null}
@@ -132,7 +151,7 @@ const Login: React.FC = () => {
         />
       )}
 
-      {/* DRIVER FORM POPUP */}
+      {/* Driver form on login page */}
       {showDriverForm && (
         <DriverForm
           driver={null}
@@ -141,14 +160,19 @@ const Login: React.FC = () => {
         />
       )}
 
-      {/* SIGN-IN / SIGN-OUT */}
+      {/* Auth controls */}
       {!state.isAuthenticated && (
-        <button onClick={() => signIn()}>Sign in with Asgardeo</button>
+        <>
+          <p>Please sign in to continue.</p>
+          <button onClick={() => signIn()}>Sign in with Asgardeo</button>
+        </>
       )}
 
       {state.isAuthenticated && (
         <>
-          {!loadingRoles && <p>Roles: {roles.join(", ") || "None"}</p>}
+          {!loadingRoles && (
+            <p>Roles: {roles.join(", ") || "None assigned yet"}</p>
+          )}
           <button onClick={() => signOut()}>Sign out</button>
         </>
       )}
