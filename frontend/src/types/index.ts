@@ -95,8 +95,8 @@ export interface Trip {
   Tip: number; // decimal(10,2)
   RideStatus: RideStatus;
 
-  RiderID: number;
-  DriverID: number | null;
+  RiderID: string; // email
+  DriverID: string | null; // email
 
   createdAt?: string;
   updatedAt?: string;

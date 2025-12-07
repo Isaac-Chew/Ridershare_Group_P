@@ -70,13 +70,18 @@ const DriverPage: React.FC = () => {
     
     try {
       setError(null);
+      const driverEmail = filteredDrivers[0]?.Email;
+      if (!driverEmail) {
+        throw new Error('Driver email not found');
+      }
+
       const response = await fetch(`${API_BASE_URL}/api/trip/${trip.RideID}/accept`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          DriverID: filteredDrivers[0]?.DriverID || null
+          DriverID: driverEmail
         }),
       });
 
