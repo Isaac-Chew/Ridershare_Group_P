@@ -12,6 +12,7 @@ interface TripsTableProps {
   isLoading?: boolean;
   onAccept?: (trip: Trip) => void;
   onMarkDone?: (trip: Trip) => void;
+  disableAccept?: boolean; // New prop to disable accept buttons
 }
 
 const statusColors: Record<RideStatus, string> = {
@@ -40,7 +41,7 @@ function StatusBadge({ status }: { status: RideStatus }) {
   );
 }
 
-function TripsTable({ data, isLoading = false, onAccept, onMarkDone }: TripsTableProps) {
+function TripsTable({ data, isLoading = false, onAccept, onMarkDone, disableAccept = false }: TripsTableProps) {
   const columns: TableColumn<Trip>[] = [
     { key: 'RideID', label: 'Ride ID' },
     { key: 'PickUpLocation', label: 'Pick Up Location' },
@@ -160,23 +161,29 @@ function TripsTable({ data, isLoading = false, onAccept, onMarkDone }: TripsTabl
                   <td style={{ padding: '16px' }}>
                     {onAccept && row.RideStatus === 'Requested' && (
                       <button
-                        onClick={() => onAccept(row)}
+                        onClick={() => !disableAccept && onAccept(row)}
+                        disabled={disableAccept}
                         style={{
                           padding: '8px 16px',
-                          backgroundColor: '#10b981',
+                          backgroundColor: disableAccept ? '#9ca3af' : '#10b981',
                           color: 'white',
                           border: 'none',
                           borderRadius: '6px',
-                          cursor: 'pointer',
+                          cursor: disableAccept ? 'not-allowed' : 'pointer',
                           fontSize: '14px',
                           fontWeight: 500,
                           transition: 'background-color 0.2s',
+                          opacity: disableAccept ? 0.6 : 1,
                         }}
                         onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = '#059669';
+                          if (!disableAccept) {
+                            e.currentTarget.style.backgroundColor = '#059669';
+                          }
                         }}
                         onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = '#10b981';
+                          if (!disableAccept) {
+                            e.currentTarget.style.backgroundColor = '#10b981';
+                          }
                         }}
                       >
                         Accept

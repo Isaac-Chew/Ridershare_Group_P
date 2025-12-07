@@ -423,6 +423,7 @@ const DriverPage: React.FC = () => {
                     data={trips}
                     isLoading={isLoadingTrips}
                     onAccept={handleAcceptTrip}
+                    disableAccept={rideHistory.some(trip => trip.RideStatus === 'InProgress')}
                   />
                 </div>
                 
