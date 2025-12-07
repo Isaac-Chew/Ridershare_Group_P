@@ -230,30 +230,78 @@ const RiderPage: React.FC = () => {
       return;
     }
 
+    // Validate required fields
+    if (!tripData.PickUpLocation || !tripData.DropOffLocation) {
+      setError('Pickup and dropoff locations are required');
+      return;
+    }
+
     try {
       setError(null);
-      const response = await fetch(`${API_BASE_URL}/api/trip`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...tripData,
-          RiderID: email, // Ensure we use the authenticated rider's email
-        }),
-      });
+      
+      // Prepare the payload matching backend expectations
+      const payload = {
+        PickUpLocation: String(tripData.PickUpLocation).trim(),
+        DropOffLocation: String(tripData.DropOffLocation).trim(),
+        EstimatedTime: Number(tripData.EstimatedTime || 0),
+        Fare: Number(tripData.Fare || 0),
+        Tip: Number(tripData.Tip || 0),
+        RiderID: String(email).trim(), // Always use the authenticated rider's email
+        DriverID: tripData.DriverID || null,
+      };
+
+      console.log('Submitting trip with payload:', payload);
+      console.log('API URL:', `${API_BASE_URL}/api/trip`);
+
+      let response;
+      try {
+        response = await fetch(`${API_BASE_URL}/api/trip`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        });
+      } catch (networkError) {
+        console.error('Network error:', networkError);
+        throw new Error(`Network error: Unable to connect to server. Please check if the backend is running at ${API_BASE_URL}`);
+      }
+
+      console.log('Response status:', response.status, response.statusText);
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create trip');
+        let errorMessage = `Failed to create trip (${response.status} ${response.statusText})`;
+        try {
+          const errorData = await response.json();
+          console.error('Error response data:', errorData);
+          errorMessage = errorData.error || errorData.message || errorMessage;
+          if (errorData.details) {
+            console.error('Error details:', errorData.details);
+          }
+        } catch (parseError) {
+          // If response is not JSON, try to get text
+          try {
+            const errorText = await response.text();
+            console.error('Error response text:', errorText);
+            errorMessage = errorText || errorMessage;
+          } catch (textError) {
+            console.error('Could not parse error response:', textError);
+            errorMessage = `Server returned ${response.status} ${response.statusText}`;
+          }
+        }
+        throw new Error(errorMessage);
       }
+
+      const result = await response.json();
+      console.log('Trip created successfully:', result);
 
       // Close form and refresh trips
       setShowTripForm(false);
       await fetchRequestedTrips();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
-      console.error('Error creating trip:', err);
+      console.error('Error creating trip - full error:', err);
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred while creating the trip';
+      setError(errorMessage);
     }
   };
 
@@ -400,12 +448,23 @@ const RiderPage: React.FC = () => {
         {error && <div style={errorStyle}>{error}</div>}
 
         {showTripForm ? (
-          <TripForm
-            trip={null}
-            riderId={email || ''}
-            onSubmit={handleTripSubmit}
-            onCancel={handleTripCancel}
-          />
+          email ? (
+            <TripForm
+              trip={null}
+              riderId={email}
+              onSubmit={handleTripSubmit}
+              onCancel={handleTripCancel}
+            />
+          ) : (
+            <div style={{ 
+              padding: '40px', 
+              textAlign: 'center', 
+              color: '#64748b',
+              fontSize: '16px' 
+            }}>
+              Loading rider information...
+            </div>
+          )
         ) : showForm ? (
           <Form
             rider={editingRider}

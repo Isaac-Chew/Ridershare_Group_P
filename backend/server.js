@@ -801,6 +801,8 @@ app.post('/api/trip', async (req, res) => {
             DriverID
         } = req.body;
 
+        console.log('Received trip creation request:', { PickUpLocation, DropOffLocation, EstimatedTime, Fare, Tip, RiderID, DriverID });
+
         // Validate required fields
         if (!PickUpLocation || !DropOffLocation || !RiderID) {
             return res.status(400).json({ 
@@ -810,15 +812,17 @@ app.post('/api/trip', async (req, res) => {
 
         // Create new trip
         const newTrip = await Trip.create({
-            PickUpLocation,
-            DropOffLocation,
-            EstimatedTime,
-            Fare,
-            Tip,
+            PickUpLocation: String(PickUpLocation).trim(),
+            DropOffLocation: String(DropOffLocation).trim(),
+            EstimatedTime: EstimatedTime ? Number(EstimatedTime) : null,
+            Fare: Fare ? Number(Fare) : null,
+            Tip: Tip ? Number(Tip) : null,
             RideStatus: 'Requested', // Always set to Requested for new trips
-            RiderID,
-            DriverID: DriverID || null
+            RiderID: String(RiderID).trim(),
+            DriverID: DriverID ? String(DriverID).trim() : null
         });
+
+        console.log('Trip created successfully:', newTrip.toJSON());
 
         res.status(201).json({
             message: 'Trip created successfully',
@@ -826,8 +830,17 @@ app.post('/api/trip', async (req, res) => {
         });
     } catch (err) {
         console.error('Error creating trip:', err);
+        console.error('Error details:', {
+            name: err.name,
+            message: err.message,
+            stack: err.stack
+        });
+        
+        // Return more specific error message
+        const errorMessage = err.message || 'Failed to create trip';
         res.status(500).json({ 
-            error: 'Failed to create trip' 
+            error: errorMessage,
+            details: process.env.NODE_ENV === 'development' ? err.message : undefined
         });
     }
 });
