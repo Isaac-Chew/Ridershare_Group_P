@@ -70,7 +70,7 @@ const DriverPage: React.FC = () => {
     
     try {
       setError(null);
-      const response = await fetch(`${API_BASE_URL}/api/trips/${trip.RideID}/accept`, {
+      const response = await fetch(`${API_BASE_URL}/api/trip/${trip.RideID}/accept`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -277,30 +277,18 @@ const DriverPage: React.FC = () => {
           <div style={{ height: '32px', width: '1px', backgroundColor: '#e5e7eb' }} />
           <h2 style={{ margin: 0, color: '#1f2937', fontWeight: 600 }}>Drivers Management</h2>
         </div>
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-          {!showForm && (
-            <button 
-              onClick={handleAdd} 
-              style={buttonStyle}
-              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#2563eb'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#3b82f6'; }}
-            >
-              Add New Driver
-            </button>
-          )}
+        {!showForm && (
           <button 
-            onClick={() => signOut()} 
-            style={{
-              ...buttonStyle,
-              backgroundColor: '#6b7280',
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#4b5563'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#6b7280'; }}
+            onClick={handleAdd} 
+            style={buttonStyle}
+            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#2563eb'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#3b82f6'; }}
           >
-            Sign Out
+            Add New Driver
           </button>
-        </div>
+        )}
       </div>
+
 
       <div style={contentStyle}>
         {error && <div style={errorStyle}>{error}</div>}
