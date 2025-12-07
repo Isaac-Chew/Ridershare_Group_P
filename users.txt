@@ -1,0 +1,3 @@
+Role , Email (Case Specific), Password
+Rider, Isaacchew@utexas.edu, FullStack372
+Driver, athenawu.2004@gmail.com, Asgardeo1!
