@@ -302,7 +302,6 @@ const DriverPage: React.FC = () => {
         </div>
       </div>
 
-
       <div style={contentStyle}>
         {error && <div style={errorStyle}>{error}</div>}
 
