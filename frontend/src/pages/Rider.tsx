@@ -4,10 +4,10 @@ import Form from '../components/Form';
 import Logo from '../components/Logo';
 import { Rider, RiderFormData } from '../types';
 import { useAuth } from '../hooks/useAuth';
+import { useAuthContext } from '@asgardeo/auth-react';
+const { signOut } = useAuthContext();
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
-
-
 
 const RiderPage: React.FC = () => {
   const { email, isRider, isLoading: authLoading } = useAuth();
@@ -267,6 +267,8 @@ const RiderPage: React.FC = () => {
           </button>
         )}
       </div>
+
+      <button onClick={() => signOut()}>Sign out</button>
 
       <div style={contentStyle}>
         {error && <div style={errorStyle}>{error}</div>}

@@ -5,6 +5,8 @@ import TripsTable from '../components/TripsTable';
 import Form from '../components/Form';
 import { Driver, DriverFormData, Trip } from '../types';
 import { useAuth } from '../hooks/useAuth';
+import { useAuthContext } from '@asgardeo/auth-react';
+const { signOut } = useAuthContext();
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
@@ -286,6 +288,9 @@ const DriverPage: React.FC = () => {
           </button>
         )}
       </div>
+
+      <button onClick={() => signOut()}>Sign out</button>
+
 
       <div style={contentStyle}>
         {error && <div style={errorStyle}>{error}</div>}
