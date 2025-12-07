@@ -73,16 +73,31 @@ const DriverPage: React.FC = () => {
     setIsLoadingRideHistory(true);
     setError(null);
     try {
-      // Fetch trips by driver ID
-      const response = await fetch(`${API_BASE_URL}/api/trip/driver/${encodeURIComponent(email)}`);
-      if (!response.ok) {
+      // Fetch trips by status (similar to fetchRequestedTrips)
+      // Get both InProgress and Completed trips, then filter by driver email
+      const [inProgressResponse, completedResponse] = await Promise.all([
+        fetch(`${API_BASE_URL}/api/trip/status/InProgress`),
+        fetch(`${API_BASE_URL}/api/trip/status/Completed`)
+      ]);
+
+      if (!inProgressResponse.ok || !completedResponse.ok) {
         throw new Error('Failed to fetch ride history');
       }
-      const data = await response.json();
-      // Filter to only show InProgress or Completed trips
-      const filteredTrips = (data.trips || []).filter(
-        (trip: Trip) => trip.RideStatus === 'InProgress' || trip.RideStatus === 'Completed'
+
+      const inProgressData = await inProgressResponse.json();
+      const completedData = await completedResponse.json();
+
+      // Combine both arrays and filter by driver email
+      const allTrips = [
+        ...(inProgressData.trips || []),
+        ...(completedData.trips || [])
+      ];
+
+      // Filter to only show trips for the current driver
+      const filteredTrips = allTrips.filter(
+        (trip: Trip) => trip.DriverID && trip.DriverID.toLowerCase() === email.toLowerCase()
       );
+
       setRideHistory(filteredTrips);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
