@@ -547,7 +547,7 @@ app.delete('/api/riders/:id', async (req, res) => {
 // DRIVER ROUTES
 
 // POST new driver (user can register)
-app.post('/api/drivers', async (req, res) => {
+app.post('/api/driver', async (req, res) => {
     try {
         const {
             FirstName,
@@ -625,7 +625,7 @@ app.post('/api/drivers', async (req, res) => {
 });
 
 // GET all drivers (for admin/table view - MVP: no auth required)
-app.get('/api/drivers', async (req, res) => {
+app.get('/api/driver', async (req, res) => {
     try {
         const drivers = await Driver.findAll({
             order: [['DriverID', 'ASC']]
@@ -641,7 +641,7 @@ app.get('/api/drivers', async (req, res) => {
 });
 
 // GET driver by id (driver can only see their own details)
-app.get('/api/drivers/:id', authenticateToken, verifyDriverOwnership, async (req, res) => {
+app.get('/api/driver/:id', authenticateToken, verifyDriverOwnership, async (req, res) => {
     try {
         const { id } = req.params;
 
@@ -669,7 +669,7 @@ app.get('/api/drivers/:id', authenticateToken, verifyDriverOwnership, async (req
 });
 
 // PUT update driver (MVP: no auth required for admin interface)
-app.put('/api/drivers/:id', async (req, res) => {
+app.put('/api/driver/:id', async (req, res) => {
     try {
         const { id } = req.params;
         const {
@@ -753,7 +753,7 @@ app.put('/api/drivers/:id', async (req, res) => {
 });
 
 // DELETE driver (driver can deactivate their own account)
-app.delete('/api/drivers/:id', async (req, res) => {
+app.delete('/api/driver/:id', async (req, res) => {
     try {
         const { id } = req.params;
 
@@ -788,7 +788,7 @@ app.delete('/api/drivers/:id', async (req, res) => {
 // TRIP ROUTES
 
 // POST new trip (rider requests ride)
-app.post('/api/trips', async (req, res) => {
+app.post('/api/trip', async (req, res) => {
     try {
         const {
             PickUpLocation,
@@ -833,7 +833,7 @@ app.post('/api/trips', async (req, res) => {
 });
 
 // GET all trips
-app.get('/api/trips', async (req, res) => {
+app.get('/api/trip', async (req, res) => {
     try {
         const trips = await Trip.findAll({
             order: [['RideID', 'ASC']]
@@ -849,7 +849,7 @@ app.get('/api/trips', async (req, res) => {
 });
 
 // GET trips by RiderID
-app.get('/api/trips/rider/:RiderID', async (req, res) => {
+app.get('/api/trip/rider/:RiderID', async (req, res) => {
     try {
         const { RiderID } = req.params;
         const riderIdInt = parseInt(RiderID);
@@ -877,7 +877,7 @@ app.get('/api/trips/rider/:RiderID', async (req, res) => {
 });
 
 // GET trips by DriverID
-app.get('/api/trips/driver/:DriverID', async (req, res) => {
+app.get('/api/trip/driver/:DriverID', async (req, res) => {
     try {
         const { DriverID } = req.params;
         const driverIdInt = parseInt(DriverID);
@@ -905,7 +905,7 @@ app.get('/api/trips/driver/:DriverID', async (req, res) => {
 });
 
 // GET trips by RideStatus
-app.get('/api/trips/status/:status', async (req, res) => {
+app.get('/api/trip/status/:status', async (req, res) => {
     try {
         const { status } = req.params;
 
@@ -926,7 +926,7 @@ app.get('/api/trips/status/:status', async (req, res) => {
 });
 
 // PUT update trip (accept trip - driver accepts ride)
-app.put('/api/trips/:id/accept', async (req, res) => {
+app.put('/api/trip/:id/accept', async (req, res) => {
     try {
         const { id } = req.params;
         const { DriverID } = req.body;
@@ -985,7 +985,7 @@ app.put('/api/trips/:id/accept', async (req, res) => {
 });
 
 // DELETE trip (soft delete by setting RideStatus to Cancelled)
-app.delete('/api/trips/:id', async (req, res) => {
+app.delete('/api/trip/:id', async (req, res) => {
     try {
         const { id } = req.params;
         const tripIdInt = parseInt(id);
