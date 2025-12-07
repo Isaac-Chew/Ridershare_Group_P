@@ -5,7 +5,8 @@ import Form from "../components/Form";
 import DriverForm from "../components/DriverForm";
 import { RiderFormData, DriverFormData } from "../types";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
 
 const Login: React.FC = () => {
   const { state, signIn, signOut, getDecodedIDToken } = useAuthContext();
@@ -28,7 +29,6 @@ const Login: React.FC = () => {
       try {
         const payload: any = await getDecodedIDToken();
 
-        // Debugging – see what comes back from Asgardeo
         console.log("ID token payload:", payload);
 
         const tokenRoles: string[] =
@@ -48,7 +48,6 @@ const Login: React.FC = () => {
     loadRoles();
   }, [state.isAuthenticated, getDecodedIDToken]);
 
-  // Create rider directly from Login page
   const handleRiderSubmit = async (data: RiderFormData) => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/riders`, {
@@ -70,7 +69,6 @@ const Login: React.FC = () => {
     }
   };
 
-  // Create driver directly from Login page
   const handleDriverSubmit = async (data: DriverFormData) => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/driver`, {
@@ -96,7 +94,7 @@ const Login: React.FC = () => {
     <div className="App">
       <h1>Rideshare Login</h1>
 
-      {/* Not signed in – just show sign-in button */}
+      {/* Not signed in: just show sign-in button */}
       {!state.isAuthenticated && (
         <>
           <p>Please sign in to continue.</p>
@@ -104,7 +102,7 @@ const Login: React.FC = () => {
         </>
       )}
 
-      {/* Signed in – show role info, add buttons, and forms */}
+      {/* Signed in: show roles, add buttons, and forms */}
       {state.isAuthenticated && (
         <>
           {loadingRoles ? (
@@ -115,7 +113,6 @@ const Login: React.FC = () => {
             <p>You're signed in, but no roles are assigned.</p>
           )}
 
-          {/* Buttons to show forms (no redirect) */}
           <div style={{ display: "flex", gap: "12px", marginBottom: "16px" }}>
             <button
               onClick={() => {
@@ -136,7 +133,7 @@ const Login: React.FC = () => {
             </button>
           </div>
 
-          {/* Rider form pops up here */}
+          {/* Rider form inline on login page */}
           {showRiderForm && (
             <Form
               rider={null}
@@ -145,7 +142,7 @@ const Login: React.FC = () => {
             />
           )}
 
-          {/* Driver form pops up here */}
+          {/* Driver form inline on login page */}
           {showDriverForm && (
             <DriverForm
               driver={null}
