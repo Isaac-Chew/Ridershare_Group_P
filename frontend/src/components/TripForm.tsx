@@ -1,14 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { Trip } from '../types';
+import TripTimeEstimator from "../components/TripTimeEstimator";
 
 interface TripFormProps {
   trip?: Partial<Trip> | null;
-  riderId: string; // RiderID (email) passed via prop or context upstream
+  riderId: string;
   onSubmit: (data: Partial<Trip>) => void;
   onCancel: () => void;
 }
 
 const TripForm: React.FC<TripFormProps> = ({ trip, riderId, onSubmit, onCancel }) => {
+
   const [formData, setFormData] = useState<Partial<Trip>>({
     PickUpLocation: '',
     DropOffLocation: '',
@@ -17,39 +19,36 @@ const TripForm: React.FC<TripFormProps> = ({ trip, riderId, onSubmit, onCancel }
     Tip: 0,
     RiderID: riderId,
   });
-  
-  // Local state for Tip input to allow empty string during editing
-  const [tipInputValue, setTipInputValue] = useState<string>('');
 
+  const [tipInputValue, setTipInputValue] = useState<string>('');
   const [errors, setErrors] = useState<Partial<Record<'PickUpLocation' | 'DropOffLocation' | 'EstimatedTime' | 'Fare' | 'Tip', string>>>({});
 
   useEffect(() => {
-    const tipValue = trip?.Tip !== undefined && trip?.Tip !== null 
-      ? Number(trip.Tip) 
-      : 0;
-    
+    const tipValue =
+      trip?.Tip !== undefined && trip?.Tip !== null ? Number(trip.Tip) : 0;
+
     setFormData((prev) => ({
       ...prev,
       PickUpLocation: (trip?.PickUpLocation ?? '').toString(),
       DropOffLocation: (trip?.DropOffLocation ?? '').toString(),
-      EstimatedTime: trip?.RideID 
-        ? (typeof trip?.EstimatedTime === 'number' ? trip!.EstimatedTime : Number(trip?.EstimatedTime ?? 8))
+      EstimatedTime: trip?.RideID
+        ? (typeof trip?.EstimatedTime === 'number'
+          ? trip.EstimatedTime
+          : Number(trip?.EstimatedTime ?? 8))
         : 8,
       Fare: trip?.RideID
-        ? (typeof trip?.Fare === 'number' ? trip!.Fare : Number(trip?.Fare ?? 19))
+        ? (typeof trip?.Fare === 'number' ? trip.Fare : Number(trip?.Fare ?? 19))
         : 19,
       Tip: tipValue,
       RiderID: riderId,
       DriverID: trip?.DriverID ?? null,
-      // RideStatus is always set to 'Requested' by the backend for new trips
     }));
-    
-    // Set tip input value - empty string if 0, otherwise the number as string
+
     setTipInputValue(tipValue === 0 ? '' : String(tipValue));
   }, [trip, riderId]);
 
   const validate = (): boolean => {
-    const newErrors: Partial<Record<'PickUpLocation' | 'DropOffLocation' | 'EstimatedTime' | 'Fare' | 'Tip', string>> = {};
+    const newErrors: any = {};
 
     if (!formData.PickUpLocation || !String(formData.PickUpLocation).trim()) {
       newErrors.PickUpLocation = 'Pickup location is required';
@@ -64,8 +63,7 @@ const TripForm: React.FC<TripFormProps> = ({ trip, riderId, onSubmit, onCancel }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Ensure RiderID is set from riderId prop (which should be the email)
+
     if (!riderId || riderId.trim() === '') {
       setErrors({ PickUpLocation: 'Rider ID is required. Please refresh the page.' });
       return;
@@ -81,15 +79,9 @@ const TripForm: React.FC<TripFormProps> = ({ trip, riderId, onSubmit, onCancel }
       Tip: Number(formData.Tip || 0),
       RiderID: riderId.trim(),
       DriverID: formData.DriverID ?? null,
-      // RideStatus is always set to 'Requested' by the backend for new trips
     };
 
-    // Double-check required fields before submitting
-    if (!payload.PickUpLocation || !payload.DropOffLocation || !payload.RiderID) {
-      setErrors({ 
-        PickUpLocation: !payload.PickUpLocation ? 'Pickup location is required' : undefined,
-        DropOffLocation: !payload.DropOffLocation ? 'Dropoff location is required' : undefined
-      });
+    if (!payload.PickUpLocation || !payload.DropOffLocation) {
       return;
     }
 
@@ -98,37 +90,37 @@ const TripForm: React.FC<TripFormProps> = ({ trip, riderId, onSubmit, onCancel }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    
+
     if (name === 'Tip') {
-      // Update the input value (allows empty string)
       setTipInputValue(value);
-      // Update formData with number (0 if empty)
       setFormData((prev) => ({
         ...prev,
         Tip: value === '' ? 0 : Number(value),
       }));
-    } else {
-      setFormData((prev) => ({
-        ...prev,
-        [name]: name === 'EstimatedTime' || name === 'Fare'
+      return;
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]:
+        name === 'EstimatedTime' || name === 'Fare'
           ? (value === '' ? (name === 'EstimatedTime' ? 8 : 19) : Number(value))
           : value,
-      }));
-    }
-    
+    }));
+
     if (errors[name as keyof typeof errors]) {
       setErrors((prev) => ({ ...prev, [name]: undefined }));
     }
   };
 
-  // Shared styling similar to Form.tsx and DriverForm.tsx
+  // styles
   const formStyle: React.CSSProperties = {
     maxWidth: '600px',
     margin: '0 auto',
     padding: '32px',
     backgroundColor: '#ffffff',
     borderRadius: '12px',
-    boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
   };
 
   const labelStyle: React.CSSProperties = {
@@ -146,9 +138,7 @@ const TripForm: React.FC<TripFormProps> = ({ trip, riderId, onSubmit, onCancel }
     marginBottom: '4px',
     border: '1px solid #e5e7eb',
     borderRadius: '8px',
-    boxSizing: 'border-box',
     fontSize: '14px',
-    transition: 'border-color 0.2s, box-shadow 0.2s',
   };
 
   const readOnlyInputStyle: React.CSSProperties = {
@@ -156,17 +146,6 @@ const TripForm: React.FC<TripFormProps> = ({ trip, riderId, onSubmit, onCancel }
     backgroundColor: '#f3f4f6',
     color: '#6b7280',
     cursor: 'not-allowed',
-  };
-
-  const inputFocus = (e: React.FocusEvent<HTMLInputElement>) => {
-    e.target.style.outline = 'none';
-    e.target.style.borderColor = '#3b82f6';
-    e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
-  };
-
-  const inputBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    e.target.style.borderColor = '#e5e7eb';
-    e.target.style.boxShadow = 'none';
   };
 
   const errorStyle: React.CSSProperties = {
@@ -187,21 +166,20 @@ const TripForm: React.FC<TripFormProps> = ({ trip, riderId, onSubmit, onCancel }
 
   const buttonStyle: React.CSSProperties = {
     padding: '12px 24px',
-    border: 'none',
     borderRadius: '8px',
     cursor: 'pointer',
     fontSize: '16px',
     fontWeight: 500,
-    transition: 'background-color 0.2s',
-    boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
+    border: 'none',
   };
 
   return (
     <form onSubmit={handleSubmit} style={formStyle}>
-      <h2 style={{ marginTop: 0, marginBottom: '24px', color: '#1e3a8a' }}>
+      <h2 style={{ margin: 0, marginBottom: '24px', color: '#1e3a8a' }}>
         {trip?.RideID ? 'Edit Trip' : 'Request Trip'}
       </h2>
 
+      {/* PICKUP */}
       <div style={{ marginBottom: '20px' }}>
         <label style={labelStyle}>
           Pick Up Location <span style={{ color: '#ef4444' }}>*</span>
@@ -212,13 +190,12 @@ const TripForm: React.FC<TripFormProps> = ({ trip, riderId, onSubmit, onCancel }
           value={String(formData.PickUpLocation ?? '')}
           onChange={handleChange}
           style={inputStyle}
-          onFocus={inputFocus}
-          onBlur={inputBlur}
           placeholder="e.g., 123 Main St"
         />
         {errors.PickUpLocation && <div style={errorStyle}>{errors.PickUpLocation}</div>}
       </div>
 
+      {/* DROPOFF */}
       <div style={{ marginBottom: '20px' }}>
         <label style={labelStyle}>
           Drop Off Location <span style={{ color: '#ef4444' }}>*</span>
@@ -229,28 +206,36 @@ const TripForm: React.FC<TripFormProps> = ({ trip, riderId, onSubmit, onCancel }
           value={String(formData.DropOffLocation ?? '')}
           onChange={handleChange}
           style={inputStyle}
-          onFocus={inputFocus}
-          onBlur={inputBlur}
           placeholder="e.g., 456 Market St"
         />
         {errors.DropOffLocation && <div style={errorStyle}>{errors.DropOffLocation}</div>}
       </div>
 
-      <div style={{ marginBottom: '20px' }}>
+      {/* AI-POWERED ESTIMATED TIME */}
+      <div style={{ marginBottom: "20px" }}>
         <label style={labelStyle}>Estimated Time (minutes)</label>
+
         <input
           type="number"
           name="EstimatedTime"
           value={Number(formData.EstimatedTime ?? 8)}
-          onChange={handleChange}
-          readOnly={!trip?.RideID}
-          style={!trip?.RideID ? readOnlyInputStyle : inputStyle}
-          onFocus={!trip?.RideID ? undefined : inputFocus}
-          onBlur={!trip?.RideID ? undefined : inputBlur}
-          min={0}
+          readOnly
+          style={readOnlyInputStyle}
+        />
+
+        <TripTimeEstimator
+          pickup={String(formData.PickUpLocation || "")}
+          dropoff={String(formData.DropOffLocation || "")}
+          onEstimate={(minutes) =>
+            setFormData((prev) => ({
+              ...prev,
+              EstimatedTime: minutes,
+            }))
+          }
         />
       </div>
 
+      {/* FARE + TIP */}
       <div style={{ display: 'flex', gap: '12px' }}>
         <div style={{ flex: 1 }}>
           <label style={labelStyle}>Fare ($)</label>
@@ -259,14 +244,11 @@ const TripForm: React.FC<TripFormProps> = ({ trip, riderId, onSubmit, onCancel }
             step="0.01"
             name="Fare"
             value={Number(formData.Fare ?? 19)}
-            onChange={handleChange}
-            readOnly={!trip?.RideID}
-            style={!trip?.RideID ? readOnlyInputStyle : inputStyle}
-            onFocus={!trip?.RideID ? undefined : inputFocus}
-            onBlur={!trip?.RideID ? undefined : inputBlur}
-            min={0}
+            readOnly
+            style={readOnlyInputStyle}
           />
         </div>
+
         <div style={{ flex: 1 }}>
           <label style={labelStyle}>Tip ($)</label>
           <input
@@ -276,28 +258,24 @@ const TripForm: React.FC<TripFormProps> = ({ trip, riderId, onSubmit, onCancel }
             value={tipInputValue}
             onChange={handleChange}
             style={inputStyle}
-            onFocus={inputFocus}
-            onBlur={inputBlur}
             min={0}
           />
         </div>
       </div>
 
+      {/* Buttons */}
       <div style={buttonContainerStyle}>
         <button
           type="button"
           onClick={onCancel}
           style={{ ...buttonStyle, backgroundColor: '#e5e7eb', color: '#111827' }}
-          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#d1d5db')}
-          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#e5e7eb')}
         >
           Cancel
         </button>
+
         <button
           type="submit"
           style={{ ...buttonStyle, backgroundColor: '#3b82f6', color: 'white' }}
-          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#2563eb')}
-          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#3b82f6')}
         >
           {trip?.RideID ? 'Save Changes' : 'Request Trip'}
         </button>
