@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import Navbar from '../components/Navbar';
-import DriverTable from '../components/DriverTable';
 import DriverForm from '../components/DriverForm';
 import { Driver, DriverFormData } from '../types';
 import { useAuth } from '../hooks/useAuth';
@@ -132,31 +131,7 @@ const DriverAccount: React.FC = () => {
     setEditingDriver(null);
   };
 
-  const columns = [
-    { key: 'DriverID' as keyof Driver, label: 'ID' },
-    { key: 'FirstName' as keyof Driver, label: 'First Name' },
-    { key: 'LastName' as keyof Driver, label: 'Last Name' },
-    { key: 'DateOfBirth' as keyof Driver, label: 'Date of Birth', render: (value: string) => new Date(value).toLocaleDateString() },
-    { key: 'PhoneNumber' as keyof Driver, label: 'Phone' },
-    { key: 'Email' as keyof Driver, label: 'Email' },
-    { key: 'City' as keyof Driver, label: 'City' },
-    { key: 'State' as keyof Driver, label: 'State' },
-    { key: 'Status' as keyof Driver, label: 'Status', render: (value: string | null) => (
-      <span 
-        style={{ 
-          color: value === 'Active' ? '#3b82f6' : '#64748b',
-          fontWeight: value === 'Active' ? 500 : 400,
-        }}
-      >
-        {value || 'Unknown'}
-      </span>
-    ) },
-    { key: 'LicenseNumber' as keyof Driver, label: 'License #' },
-    { key: 'VehicleMake' as keyof Driver, label: 'Vehicle Make' },
-    { key: 'VehicleModel' as keyof Driver, label: 'Vehicle Model' },
-    { key: 'VehicleColor' as keyof Driver, label: 'Color' },
-    { key: 'VehicleLicensePlate' as keyof Driver, label: 'Plate' },
-  ];
+  const currentDriver = filteredDrivers[0];
 
   const pageStyle: React.CSSProperties = {
     minHeight: '100vh',
@@ -187,8 +162,8 @@ const DriverAccount: React.FC = () => {
 
         {showForm ? (
           <DriverForm
-            driver={editingDriver as any}
-            onSubmit={handleFormSubmit as any}
+            driver={editingDriver}
+            onSubmit={handleFormSubmit}
             onCancel={handleCancel}
           />
         ) : (
@@ -207,13 +182,210 @@ const DriverAccount: React.FC = () => {
                 <h2 style={{ marginBottom: '20px', color: '#1f2937', fontWeight: 600 }}>
                   Account Information
                 </h2>
-                <DriverTable
-                  data={filteredDrivers}
-                  columns={columns}
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
-                  isLoading={isLoading || authLoading}
-                />
+                
+                {isLoading || authLoading ? (
+                  <div style={{ 
+                    textAlign: 'center', 
+                    padding: '40px', 
+                    color: '#64748b',
+                    fontSize: '16px' 
+                  }}>
+                    Loading...
+                  </div>
+                ) : currentDriver ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                    {/* Personal Information Card */}
+                    <div style={{
+                      backgroundColor: '#ffffff',
+                      borderRadius: '12px',
+                      boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
+                      padding: '24px',
+                    }}>
+                      <h3 style={{ 
+                        marginBottom: '20px', 
+                        color: '#1f2937', 
+                        fontWeight: 600,
+                        fontSize: '18px',
+                        borderBottom: '2px solid #e5e7eb',
+                        paddingBottom: '12px'
+                      }}>
+                        Personal Information
+                      </h3>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '16px' }}>
+                        <div>
+                          <div style={{ color: '#64748b', fontSize: '12px', fontWeight: 500, marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Driver ID</div>
+                          <div style={{ color: '#1f2937', fontSize: '14px' }}>{currentDriver.DriverID || 'N/A'}</div>
+                        </div>
+                        <div>
+                          <div style={{ color: '#64748b', fontSize: '12px', fontWeight: 500, marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>First Name</div>
+                          <div style={{ color: '#1f2937', fontSize: '14px' }}>{currentDriver.FirstName || 'N/A'}</div>
+                        </div>
+                        <div>
+                          <div style={{ color: '#64748b', fontSize: '12px', fontWeight: 500, marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Last Name</div>
+                          <div style={{ color: '#1f2937', fontSize: '14px' }}>{currentDriver.LastName || 'N/A'}</div>
+                        </div>
+                        <div>
+                          <div style={{ color: '#64748b', fontSize: '12px', fontWeight: 500, marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Date of Birth</div>
+                          <div style={{ color: '#1f2937', fontSize: '14px' }}>
+                            {currentDriver.DateOfBirth ? new Date(currentDriver.DateOfBirth).toLocaleDateString() : 'N/A'}
+                          </div>
+                        </div>
+                        <div>
+                          <div style={{ color: '#64748b', fontSize: '12px', fontWeight: 500, marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Phone Number</div>
+                          <div style={{ color: '#1f2937', fontSize: '14px' }}>{currentDriver.PhoneNumber || 'N/A'}</div>
+                        </div>
+                        <div>
+                          <div style={{ color: '#64748b', fontSize: '12px', fontWeight: 500, marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Email</div>
+                          <div style={{ color: '#1f2937', fontSize: '14px' }}>{currentDriver.Email || 'N/A'}</div>
+                        </div>
+                        <div>
+                          <div style={{ color: '#64748b', fontSize: '12px', fontWeight: 500, marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Street Address</div>
+                          <div style={{ color: '#1f2937', fontSize: '14px' }}>{currentDriver.StreetAddress || 'N/A'}</div>
+                        </div>
+                        <div>
+                          <div style={{ color: '#64748b', fontSize: '12px', fontWeight: 500, marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>City</div>
+                          <div style={{ color: '#1f2937', fontSize: '14px' }}>{currentDriver.City || 'N/A'}</div>
+                        </div>
+                        <div>
+                          <div style={{ color: '#64748b', fontSize: '12px', fontWeight: 500, marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>State</div>
+                          <div style={{ color: '#1f2937', fontSize: '14px' }}>{currentDriver.State || 'N/A'}</div>
+                        </div>
+                        <div>
+                          <div style={{ color: '#64748b', fontSize: '12px', fontWeight: 500, marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Zip Code</div>
+                          <div style={{ color: '#1f2937', fontSize: '14px' }}>{currentDriver.ZipCode || 'N/A'}</div>
+                        </div>
+                        <div>
+                          <div style={{ color: '#64748b', fontSize: '12px', fontWeight: 500, marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Status</div>
+                          <div style={{ 
+                            color: currentDriver.Status === 'Active' ? '#3b82f6' : '#64748b',
+                            fontSize: '14px',
+                            fontWeight: currentDriver.Status === 'Active' ? 500 : 400
+                          }}>
+                            {currentDriver.Status || 'Unknown'}
+                          </div>
+                        </div>
+                        <div>
+                          <div style={{ color: '#64748b', fontSize: '12px', fontWeight: 500, marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>License Number</div>
+                          <div style={{ color: '#1f2937', fontSize: '14px' }}>{currentDriver.LicenseNumber || 'N/A'}</div>
+                        </div>
+                        <div>
+                          <div style={{ color: '#64748b', fontSize: '12px', fontWeight: 500, marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Insurance ID</div>
+                          <div style={{ color: '#1f2937', fontSize: '14px' }}>{currentDriver.InsuranceID || 'N/A'}</div>
+                        </div>
+                        <div>
+                          <div style={{ color: '#64748b', fontSize: '12px', fontWeight: 500, marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Bank ID</div>
+                          <div style={{ color: '#1f2937', fontSize: '14px' }}>{currentDriver.BankID || 'N/A'}</div>
+                        </div>
+                        <div>
+                          <div style={{ color: '#64748b', fontSize: '12px', fontWeight: 500, marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Vehicle ID</div>
+                          <div style={{ color: '#1f2937', fontSize: '14px' }}>{currentDriver.VehicleID || 'N/A'}</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Vehicle Information Card */}
+                    <div style={{
+                      backgroundColor: '#ffffff',
+                      borderRadius: '12px',
+                      boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
+                      padding: '24px',
+                    }}>
+                      <h3 style={{ 
+                        marginBottom: '20px', 
+                        color: '#1f2937', 
+                        fontWeight: 600,
+                        fontSize: '18px',
+                        borderBottom: '2px solid #e5e7eb',
+                        paddingBottom: '12px'
+                      }}>
+                        Vehicle Information
+                      </h3>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '16px' }}>
+                        <div>
+                          <div style={{ color: '#64748b', fontSize: '12px', fontWeight: 500, marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Make</div>
+                          <div style={{ color: '#1f2937', fontSize: '14px' }}>{currentDriver.VehicleMake || 'N/A'}</div>
+                        </div>
+                        <div>
+                          <div style={{ color: '#64748b', fontSize: '12px', fontWeight: 500, marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Model</div>
+                          <div style={{ color: '#1f2937', fontSize: '14px' }}>{currentDriver.VehicleModel || 'N/A'}</div>
+                        </div>
+                        <div>
+                          <div style={{ color: '#64748b', fontSize: '12px', fontWeight: 500, marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Color</div>
+                          <div style={{ color: '#1f2937', fontSize: '14px' }}>{currentDriver.VehicleColor || 'N/A'}</div>
+                        </div>
+                        <div>
+                          <div style={{ color: '#64748b', fontSize: '12px', fontWeight: 500, marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>License Plate</div>
+                          <div style={{ color: '#1f2937', fontSize: '14px' }}>{currentDriver.VehicleLicensePlate || 'N/A'}</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div style={{
+                      display: 'flex',
+                      gap: '12px',
+                      justifyContent: 'flex-end',
+                      paddingTop: '8px'
+                    }}>
+                      <button
+                        onClick={() => handleEdit(currentDriver)}
+                        style={{
+                          padding: '10px 20px',
+                          backgroundColor: '#3b82f6',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '6px',
+                          cursor: 'pointer',
+                          fontSize: '14px',
+                          fontWeight: 500,
+                          transition: 'background-color 0.2s',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = '#2563eb';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = '#3b82f6';
+                        }}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDelete(currentDriver)}
+                        style={{
+                          padding: '10px 20px',
+                          backgroundColor: '#ef4444',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '6px',
+                          cursor: 'pointer',
+                          fontSize: '14px',
+                          fontWeight: 500,
+                          transition: 'background-color 0.2s',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = '#dc2626';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = '#ef4444';
+                        }}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ 
+                    padding: '40px', 
+                    textAlign: 'center', 
+                    color: '#64748b',
+                    fontSize: '14px',
+                    backgroundColor: '#ffffff',
+                    borderRadius: '12px',
+                    boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
+                  }}>
+                    No driver information found.
+                  </div>
+                )}
               </>
             )}
           </>
