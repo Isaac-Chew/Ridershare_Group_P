@@ -119,109 +119,109 @@ const Login: React.FC = () => {
   // RENDER
   // ===========================
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
-      <div className="w-full max-w-md bg-blue-600 rounded-3xl shadow-xl p-10 sm:p-12 text-center text-white flex flex-col gap-8">
-        {/* Logo + title */}
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-white flex items-center justify-center shadow-md">
-            <Logo size="medium" showSubtitle={false} />
+    <div className="min-h-screen bg-gray-50">
+      {/* Header - matches structure from Driver/Rider pages */}
+      <header className="bg-white py-5 px-6 border-b border-gray-200 shadow-sm">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Logo size="small" showSubtitle={false} />
+            <div className="h-8 w-px bg-gray-200" />
+            <h2 className="text-lg font-semibold text-gray-900">Welcome</h2>
           </div>
-          <div className="space-y-1">
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Rideshare Login</h1>
-            <p className="text-sm sm:text-base text-blue-100">
-              Sign in to manage your rides or register as a new rider or driver.
-            </p>
+
+          <div className="flex items-center gap-3">
+            {!state.isAuthenticated ? (
+              <button
+                onClick={() => signIn()}
+                className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 transition"
+              >
+                Sign in
+              </button>
+            ) : (
+              <button
+                onClick={() => signOut()}
+                className="inline-flex items-center gap-2 rounded-md bg-gray-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-gray-700 transition"
+              >
+                Sign out
+              </button>
+            )}
           </div>
         </div>
+      </header>
 
-        {/* Always-visible actions */}
-        <div className="flex flex-col gap-3">
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            {/* Ghost toggle buttons */}
-            <button
-              type="button"
-              className="inline-flex items-center justify-center rounded-full border border-blue-200/70 bg-blue-500/10 px-4 py-2 text-sm font-medium text-blue-50 hover:bg-blue-500/20 hover:border-blue-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-blue-600 focus-visible:ring-white transition"
-              onClick={() => {
-                setShowRiderForm(true);
-                setShowDriverForm(false);
-              }}
-            >
-              Add New Rider
-            </button>
-
-            <button
-              type="button"
-              className="inline-flex items-center justify-center rounded-full border border-blue-200/70 bg-blue-500/10 px-4 py-2 text-sm font-medium text-blue-50 hover:bg-blue-500/20 hover:border-blue-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-blue-600 focus-visible:ring-white transition"
-              onClick={() => {
-                setShowDriverForm(true);
-                setShowRiderForm(false);
-              }}
-            >
-              Add New Driver
-            </button>
-          </div>
-
-          {/* Auth controls */}
-          <div className="mt-2 space-y-3">
-            {!state.isAuthenticated && (
-              <>
-                <p className="text-xs sm:text-sm text-blue-100">
-                  Please sign in with Asgardeo to continue.
-                </p>
-                <button
-                  type="button"
-                  className="inline-flex w-full items-center justify-center rounded-xl bg-white/95 px-4 py-2.5 text-sm font-semibold text-blue-700 shadow-md hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-blue-600 focus-visible:ring-white transition"
-                  onClick={() => signIn()}
-                >
-                  Sign in with Asgardeo
-                </button>
-              </>
-            )}
-
-            {state.isAuthenticated && (
-              <>
-                {!loadingRoles && (
-                  <p className="text-xs sm:text-sm text-blue-100">
-                    Roles: {roles.join(", ") || "None assigned yet"}
+      <main className="max-w-7xl mx-auto px-6 py-10">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Left: Intro card (span 2 on large screens) */}
+          <section className="lg:col-span-2 flex items-center">
+            <div className="w-full bg-white rounded-2xl shadow-md p-8">
+              <div className="flex items-start gap-6">
+                <div className="w-20 h-20 rounded-full bg-blue-50 flex items-center justify-center">
+                  <Logo size="medium" showSubtitle={false} />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-900">Rideshare Portal</h1>
+                  <p className="mt-2 text-sm text-gray-600">
+                    Sign in to manage your rides. Or, create a new rider or driver profile
+                    below if you're setting up an account for the first time.
                   </p>
-                )}
-                <button
-                  type="button"
-                  className="inline-flex w-full items-center justify-center rounded-xl bg-blue-100/95 px-4 py-2.5 text-sm font-semibold text-blue-800 shadow-md hover:bg-blue-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-blue-600 focus-visible:ring-white transition"
-                  onClick={() => signOut()}
-                >
-                  Sign out
-                </button>
-              </>
-            )}
-          </div>
+
+                  {/* Role buttons */}
+                  <div className="mt-6 flex flex-wrap gap-3">
+                    <button
+                      onClick={() => { setShowRiderForm(true); setShowDriverForm(false); }}
+                      className="inline-flex items-center gap-2 rounded-full border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
+                    >
+                      Add New Rider
+                    </button>
+
+                    <button
+                      onClick={() => { setShowDriverForm(true); setShowRiderForm(false); }}
+                      className="inline-flex items-center gap-2 rounded-full border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
+                    >
+                      Add New Driver
+                    </button>
+                  </div>
+
+                  <div className="mt-4">
+                    {!state.isAuthenticated ? (
+                      <p className="text-sm text-gray-500">Please sign in with Asgardeo to continue.</p>
+                    ) : (
+                      <p className="text-sm text-gray-500">Roles: {loadingRoles ? 'Loading...' : (roles.join(', ') || 'None')}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Right: Forms area */}
+          <aside className="lg:col-span-1">
+            <div className="bg-white rounded-2xl shadow-md p-6 max-h-[70vh] overflow-y-auto">
+              {showRiderForm && (
+                <Form
+                  rider={null}
+                  onSubmit={handleRiderSubmit}
+                  onCancel={() => setShowRiderForm(false)}
+                />
+              )}
+
+              {showDriverForm && (
+                <DriverForm
+                  driver={null}
+                  onSubmit={handleDriverSubmit}
+                  onCancel={() => setShowDriverForm(false)}
+                />
+              )}
+
+              {!showRiderForm && !showDriverForm && (
+                <div className="text-center">
+                  <p className="text-sm text-gray-600">Use the controls on the left to create a rider or driver, or sign in above.</p>
+                </div>
+              )}
+            </div>
+          </aside>
         </div>
-
-        {/* Forms (render exactly as before) */}
-        <div className="bg-white rounded-2xl shadow-md p-4 sm:p-5 text-left max-h-[60vh] overflow-y-auto">
-          {showRiderForm && (
-            <Form
-              rider={null}
-              onSubmit={handleRiderSubmit}
-              onCancel={() => setShowRiderForm(false)}
-            />
-          )}
-
-          {showDriverForm && (
-            <DriverForm
-              driver={null}
-              onSubmit={handleDriverSubmit}
-              onCancel={() => setShowDriverForm(false)}
-            />
-          )}
-
-          {!showRiderForm && !showDriverForm && (
-            <p className="text-sm text-gray-600 text-center">
-              Use the buttons above to add a new rider or driver.
-            </p>
-          )}
-        </div>
-      </div>
+      </main>
     </div>
   );
 };
