@@ -49,7 +49,7 @@ const DriverAccount: React.FC = () => {
       setError(null);
       if (editingDriver) {
         // Update existing driver
-        const response = await fetch(`${API_BASE_URL}/api/drivers/${editingDriver.DriverID}`, {
+        const response = await fetch(`${API_BASE_URL}/api/driver/${editingDriver.DriverID}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -58,8 +58,19 @@ const DriverAccount: React.FC = () => {
         });
 
         if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to update driver');
+          let errorMessage = 'Failed to update driver';
+          try {
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+              const errorData = await response.json();
+              errorMessage = errorData.error || errorMessage;
+            } else {
+              errorMessage = `Server error: ${response.status} ${response.statusText}`;
+            }
+          } catch (parseError) {
+            errorMessage = `Server error: ${response.status} ${response.statusText}`;
+          }
+          throw new Error(errorMessage);
         }
 
         // Close form and return to table view immediately
@@ -88,13 +99,24 @@ const DriverAccount: React.FC = () => {
     }
     try {
       setError(null);
-      const response = await fetch(`${API_BASE_URL}/api/drivers/${driver.DriverID}`, {
+      const response = await fetch(`${API_BASE_URL}/api/driver/${driver.DriverID}`, {
         method: 'DELETE',
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to delete driver');
+        let errorMessage = 'Failed to delete driver';
+        try {
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const errorData = await response.json();
+            errorMessage = errorData.error || errorMessage;
+          } else {
+            errorMessage = `Server error: ${response.status} ${response.statusText}`;
+          }
+        } catch (parseError) {
+          errorMessage = `Server error: ${response.status} ${response.statusText}`;
+        }
+        throw new Error(errorMessage);
       }
 
       // Refresh the list
