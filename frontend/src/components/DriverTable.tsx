@@ -63,29 +63,13 @@ function DriverTable({
                 {column.label}
               </th>
             ))}
-            {(onEdit || onDelete) && (
-              <th
-                style={{
-                  padding: '16px',
-                  textAlign: 'left',
-                  borderBottom: '1px solid #e5e7eb',
-                  fontWeight: 600,
-                  fontSize: '14px',
-                  color: '#1e3a8a',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px',
-                }}
-              >
-                Actions
-              </th>
-            )}
           </tr>
         </thead>
         <tbody>
           {data.length === 0 ? (
             <tr>
               <td 
-                colSpan={columns.length + (onEdit || onDelete ? 1 : 0)} 
+                colSpan={columns.length} 
                 style={{ 
                   padding: '40px', 
                   textAlign: 'center', 
@@ -98,88 +82,98 @@ function DriverTable({
             </tr>
           ) : (
             data.map((row, index) => (
-              <tr
-                key={index}
-                style={{
-                  borderBottom: '1px solid #e5e7eb',
-                  backgroundColor: '#ffffff',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#f9fafb';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#ffffff';
-                }}
-              >
-                {columns.map((column) => (
-                  <td
-                    key={String(column.key)}
-                    style={{ 
-                      padding: '16px',
-                      fontSize: '14px',
-                      color: '#1f2937',
-                    }}
-                  >
-                    {column.render
-                      ? column.render(row[column.key], row)
-                      : String(row[column.key] ?? '')}
-                  </td>
-                ))}
+              <React.Fragment key={index}>
+                <tr
+                  style={{
+                    borderBottom: (onEdit || onDelete) ? 'none' : '1px solid #e5e7eb',
+                    backgroundColor: '#ffffff',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#f9fafb';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = '#ffffff';
+                  }}
+                >
+                  {columns.map((column) => (
+                    <td
+                      key={String(column.key)}
+                      style={{ 
+                        padding: '16px',
+                        fontSize: '14px',
+                        color: '#1f2937',
+                      }}
+                    >
+                      {column.render
+                        ? column.render(row[column.key], row)
+                        : String(row[column.key] ?? '')}
+                    </td>
+                  ))}
+                </tr>
                 {(onEdit || onDelete) && (
-                  <td style={{ padding: '16px' }}>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      {onEdit && (
-                        <button
-                          onClick={() => onEdit(row)}
-                          style={{
-                            padding: '8px 16px',
-                            backgroundColor: '#3b82f6',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '6px',
-                            cursor: 'pointer',
-                            fontSize: '14px',
-                            fontWeight: 500,
-                            transition: 'background-color 0.2s',
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = '#2563eb';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = '#3b82f6';
-                          }}
-                        >
-                          Edit
-                        </button>
-                      )}
-                      {onDelete && (
-                        <button
-                          onClick={() => onDelete(row)}
-                          style={{
-                            padding: '8px 16px',
-                            backgroundColor: '#ef4444',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '6px',
-                            cursor: 'pointer',
-                            fontSize: '14px',
-                            fontWeight: 500,
-                            transition: 'background-color 0.2s',
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = '#dc2626';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = '#ef4444';
-                          }}
-                        >
-                          Delete
-                        </button>
-                      )}
-                    </div>
-                  </td>
+                  <tr>
+                    <td 
+                      colSpan={columns.length}
+                      style={{ 
+                        padding: '12px 16px',
+                        borderBottom: '1px solid #e5e7eb',
+                        backgroundColor: '#ffffff',
+                      }}
+                    >
+                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                        {onEdit && (
+                          <button
+                            onClick={() => onEdit(row)}
+                            style={{
+                              padding: '8px 16px',
+                              backgroundColor: '#3b82f6',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              fontSize: '14px',
+                              fontWeight: 500,
+                              transition: 'background-color 0.2s',
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = '#2563eb';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = '#3b82f6';
+                            }}
+                          >
+                            Edit
+                          </button>
+                        )}
+                        {onDelete && (
+                          <button
+                            onClick={() => onDelete(row)}
+                            style={{
+                              padding: '8px 16px',
+                              backgroundColor: '#ef4444',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              fontSize: '14px',
+                              fontWeight: 500,
+                              transition: 'background-color 0.2s',
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = '#dc2626';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = '#ef4444';
+                            }}
+                          >
+                            Delete
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
                 )}
-              </tr>
+              </React.Fragment>
             ))
           )}
         </tbody>
