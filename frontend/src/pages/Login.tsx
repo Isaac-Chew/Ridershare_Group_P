@@ -264,7 +264,7 @@ const Login: React.FC = () => {
                   onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#2563eb'; }}
                   onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#3b82f6'; }}
                 >
-                  Add Rider
+                  Join as Rider
                 </button>
 
                 <button
@@ -276,7 +276,7 @@ const Login: React.FC = () => {
                   onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#2563eb'; }}
                   onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#3b82f6'; }}
                 >
-                  Add Driver
+                  Join as Driver
                 </button>
               </div>
             </div>
