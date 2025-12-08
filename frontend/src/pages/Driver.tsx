@@ -1,17 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import Logo from '../components/Logo';
+import Navbar from '../components/Navbar';
 import DriverTable from '../components/DriverTable';
 import TripsTable from '../components/TripsTable';
 import Form from '../components/Form';
 import { Driver, DriverFormData, Trip } from '../types';
 import { useAuth } from '../hooks/useAuth';
-import { useAuthContext } from '@asgardeo/auth-react';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
 const DriverPage: React.FC = () => {
   const { email, isDriver, isLoading: authLoading } = useAuth();
-  const { signOut } = useAuthContext();
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
@@ -298,39 +296,10 @@ const DriverPage: React.FC = () => {
     backgroundColor: '#f9fafb',
   };
 
-  const headerStyle: React.CSSProperties = {
-    backgroundColor: '#ffffff',
-    padding: '20px 40px',
-    borderBottom: '1px solid #e5e7eb',
-    boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  };
-
   const contentStyle: React.CSSProperties = {
     maxWidth: '1400px',
     margin: '0 auto',
     padding: '40px 20px',
-  };
-
-  const titleSectionStyle: React.CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '20px',
-  };
-
-  const buttonStyle: React.CSSProperties = {
-    padding: '12px 24px',
-    backgroundColor: '#3b82f6',
-    color: 'white',
-    border: 'none',
-    borderRadius: '8px',
-    cursor: 'pointer',
-    fontSize: '16px',
-    fontWeight: 500,
-    transition: 'background-color 0.2s',
-    boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
   };
 
   const errorStyle: React.CSSProperties = {
@@ -345,26 +314,7 @@ const DriverPage: React.FC = () => {
 
   return (
     <div style={pageStyle}>
-      <div style={headerStyle}>
-        <div style={titleSectionStyle}>
-          <Logo size="medium" showSubtitle={false} />
-          <div style={{ height: '32px', width: '1px', backgroundColor: '#e5e7eb' }} />
-          <h2 style={{ margin: 0, color: '#1f2937', fontWeight: 600 }}>Drivers Management</h2>
-        </div>
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-          <button 
-            onClick={() => signOut()} 
-            style={{
-              ...buttonStyle,
-              backgroundColor: '#6b7280',
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#4b5563'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#6b7280'; }}
-          >
-            Sign Out
-          </button>
-        </div>
-      </div>
+      <Navbar userType="driver" />
 
 
       <div style={contentStyle}>
@@ -389,13 +339,18 @@ const DriverPage: React.FC = () => {
                 You do not have permission to view this page. Driver role required.
               </div>
             ) : (
-              <DriverTable
-                data={filteredDrivers}
-                columns={columns}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-                isLoading={isLoading || authLoading}
-              />
+               <>
+                <h2 style={{ marginBottom: '20px', color: '#1f2937', fontWeight: 600 }}>
+                  Drivers Management
+                </h2>
+                <DriverTable
+                  data={filteredDrivers}
+                  columns={columns}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                  isLoading={isLoading || authLoading}
+                />
+              </>
             )}
             
             {isDriver && (
