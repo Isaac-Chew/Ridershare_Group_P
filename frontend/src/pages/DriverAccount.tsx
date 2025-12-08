@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import Navbar from '../components/Navbar';
 import DriverTable from '../components/DriverTable';
-import Form from '../components/Form';
+import DriverForm from '../components/DriverForm';
 import { Driver, DriverFormData } from '../types';
 import { useAuth } from '../hooks/useAuth';
 
@@ -186,8 +186,8 @@ const DriverAccount: React.FC = () => {
         {error && <div style={errorStyle}>{error}</div>}
 
         {showForm ? (
-          <Form
-            rider={editingDriver as any}
+          <DriverForm
+            driver={editingDriver as any}
             onSubmit={handleFormSubmit as any}
             onCancel={handleCancel}
           />
