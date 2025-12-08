@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Trip } from '../types';
 import TripTimeEstimator from "../components/TripTimeEstimator";
+import TipEstimator from "./TipEstimator";
 
 interface TripFormProps {
   trip?: Partial<Trip> | null;
@@ -259,6 +260,20 @@ const TripForm: React.FC<TripFormProps> = ({ trip, riderId, onSubmit, onCancel }
             onChange={handleChange}
             style={inputStyle}
             min={0}
+          />
+
+          <TipEstimator
+            fare={Number(formData.Fare ?? 19)}
+            estimatedTime={Number(formData.EstimatedTime ?? 8)}
+            onEstimate={(tip) => {
+              // update the controlled input + form data
+              const formatted = tip.toFixed(2);
+              setTipInputValue(formatted);
+              setFormData((prev) => ({
+                ...prev,
+                Tip: tip,
+              }));
+            }}
           />
         </div>
       </div>
