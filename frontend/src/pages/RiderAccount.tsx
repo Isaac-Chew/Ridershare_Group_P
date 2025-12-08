@@ -60,8 +60,19 @@ const RiderAccount: React.FC = () => {
         });
 
         if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to update rider');
+          let errorMessage = 'Failed to update rider';
+          try {
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+              const errorData = await response.json();
+              errorMessage = errorData.error || errorMessage;
+            } else {
+              errorMessage = `Server error: ${response.status} ${response.statusText}`;
+            }
+          } catch (parseError) {
+            errorMessage = `Server error: ${response.status} ${response.statusText}`;
+          }
+          throw new Error(errorMessage);
         }
 
         // Close form and return to table view immediately
@@ -98,8 +109,19 @@ const RiderAccount: React.FC = () => {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to delete rider');
+        let errorMessage = 'Failed to delete rider';
+        try {
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const errorData = await response.json();
+            errorMessage = errorData.error || errorMessage;
+          } else {
+            errorMessage = `Server error: ${response.status} ${response.statusText}`;
+          }
+        } catch (parseError) {
+          errorMessage = `Server error: ${response.status} ${response.statusText}`;
+        }
+        throw new Error(errorMessage);
       }
 
       // Refresh the list
