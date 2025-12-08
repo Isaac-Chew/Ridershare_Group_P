@@ -6,6 +6,8 @@ import Rider from "./pages/Rider";
 import Login from "./pages/Login";
 import React, { useEffect, useState } from "react";
 import Driver from "./pages/Driver"; // if you add a driver page later
+import DriverAccount from "./pages/DriverAccount";
+import RiderAccount from "./pages/RiderAccount";
 
 const App: React.FC = () => {
   const { state, getDecodedIDToken } = useAuthContext();
@@ -69,6 +71,30 @@ const App: React.FC = () => {
           )
         }
       />}
+
+      {/* Protected Driver Account page */}
+      <Route
+        path="/driver/account"
+        element={
+          state.isAuthenticated && isDriver ? (
+            <DriverAccount />
+          ) : (
+            <Navigate to="/" replace />
+          )
+        }
+      />
+
+      {/* Protected Rider Account page */}
+      <Route
+        path="/rider/account"
+        element={
+          state.isAuthenticated && isRider ? (
+            <RiderAccount />
+          ) : (
+            <Navigate to="/" replace />
+          )
+        }
+      />
     </Routes>
   );
 };
