@@ -76,7 +76,7 @@ const RiderPage: React.FC = () => {
 
       setRideHistory(filteredTrips);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      setError(err instanceof Error ? err.message : 'An error occurred.');
       console.error('Error fetching ride history:', err);
     } finally {
       setIsLoadingRideHistory(false);
