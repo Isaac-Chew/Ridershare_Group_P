@@ -4,114 +4,196 @@ import { useAuthContext } from "@asgardeo/auth-react";
 import { Navigate } from "react-router-dom";
 import Form from "../components/Form";
 import DriverForm from "../components/DriverForm";
-import Logo from "../components/Logo";
 import { RiderFormData, DriverFormData } from "../types";
-
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
-
-const Login: React.FC = () => {
-  const { state, signIn, signOut, getDecodedIDToken } = useAuthContext();
-
-  const [roles, setRoles] = useState<string[]>([]);
-  const [loadingRoles, setLoadingRoles] = useState(true);
-
-  const [showRiderForm, setShowRiderForm] = useState(false);
-  const [showDriverForm, setShowDriverForm] = useState(false);
-
-  // Load roles only when authenticated
-  useEffect(() => {
-    const loadRoles = async () => {
-      if (!state.isAuthenticated) {
-        setRoles([]);
-        setLoadingRoles(false);
-        return;
-      }
-
-      try {
-        const payload: any = await getDecodedIDToken();
-        console.log("ID token payload:", payload);
-
-        const tokenRoles: string[] =
-          (payload?.roles as string[]) ||
-          (payload?.role as string[]) ||
-          [];
-
-        setRoles(tokenRoles);
-      } catch (err) {
-        console.error("Error decoding ID token:", err);
-        setRoles([]);
-      }
-
-      setLoadingRoles(false);
-    };
-
-    loadRoles();
-  }, [state.isAuthenticated, getDecodedIDToken]);
-
-  // ===========================
-  // REDIRECT AFTER SIGN-IN (Asgardeo)
-  // ===========================
-  if (
-    state.isAuthenticated &&
-    !loadingRoles &&
-    !showRiderForm &&
-    !showDriverForm
-  ) {
-    if (roles.includes("rider")) {
-      return <Navigate to="/rider" replace />;
-    }
-    if (roles.includes("driver")) {
-      return <Navigate to="/driver" replace />;
-    }
-    // No role: stay on login and show the page below
-  }
-
-  // ===========================
-  // RIDER SUBMIT
-  // ===========================
-  const handleRiderSubmit = async (data: RiderFormData) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/riders`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to create rider");
-      }
-
-      alert("Rider created successfully!");
-      setShowRiderForm(false);
-    } catch (err) {
-      console.error("Error creating rider from login:", err);
-      alert(err instanceof Error ? err.message : "Failed to create rider");
-    }
+  const pageStyle: React.CSSProperties = {
+    minHeight: '100vh',
+    backgroundColor: '#f9fafb',
   };
 
-  // ===========================
-  // DRIVER SUBMIT
-  // ===========================
-  const handleDriverSubmit = async (data: DriverFormData) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/driver`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
+  const headerStyle: React.CSSProperties = {
+    backgroundColor: '#ffffff',
+    padding: '20px 40px',
+    borderBottom: '1px solid #e5e7eb',
+    boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.04)',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  };
 
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to create driver");
-      }
+  const contentStyle: React.CSSProperties = {
+    maxWidth: '1400px',
+    margin: '0 auto',
+    padding: '40px 20px',
+  };
 
-      alert("Driver created successfully!");
-      setShowDriverForm(false);
-    } catch (err) {
-      console.error("Error creating driver from login:", err);
-      alert(err instanceof Error ? err.message : "Failed to create driver");
+  const titleSectionStyle: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '20px',
+  };
+
+  const buttonStyle: React.CSSProperties = {
+    padding: '10px 20px',
+    backgroundColor: '#3b82f6',
+    color: 'white',
+    border: 'none',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    fontSize: '15px',
+    fontWeight: 600,
+    transition: 'background-color 0.15s',
+    boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
+  };
+
+  const cardStyle: React.CSSProperties = {
+    backgroundColor: '#ffffff',
+    borderRadius: '12px',
+    padding: '28px',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+    width: '100%',
+  };
+
+  const logoCircleStyle: React.CSSProperties = {
+    width: '80px',
+    height: '80px',
+    borderRadius: '9999px',
+    backgroundColor: '#eff6ff',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  };
+
+  const roleButtonStyle: React.CSSProperties = {
+    padding: '8px 14px',
+    borderRadius: '9999px',
+    border: '1px solid #e5e7eb',
+    backgroundColor: '#ffffff',
+    cursor: 'pointer',
+    fontWeight: 500,
+  };
+
+  const panelStyle: React.CSSProperties = {
+    backgroundColor: '#ffffff',
+    borderRadius: '16px',
+    padding: '20px',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+    maxHeight: '70vh',
+    overflowY: 'auto',
+  };
+
+  const mutedTextStyle: React.CSSProperties = {
+    color: '#64748b',
+    fontSize: '14px',
+  };
+
+  return (
+    <div style={pageStyle}>
+      <div style={headerStyle}>
+        <div style={titleSectionStyle}>
+          <Logo size="medium" showSubtitle={false} />
+          <div style={{ height: '32px', width: '1px', backgroundColor: '#e5e7eb' }} />
+          <h2 style={{ margin: 0, color: '#1f2937', fontWeight: 600 }}>Welcome</h2>
+        </div>
+
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          {!state.isAuthenticated ? (
+            <button
+              onClick={() => signIn()}
+              style={{ ...buttonStyle, backgroundColor: '#3b82f6' }}
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#2563eb'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#3b82f6'; }}
+            >
+              Sign In
+            </button>
+          ) : (
+            <button
+              onClick={() => signOut()}
+              style={{ ...buttonStyle, backgroundColor: '#6b7280' }}
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#4b5563'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#6b7280'; }}
+            >
+              Sign Out
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div style={contentStyle}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '32px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px' }}>
+            <section style={{ display: 'flex', alignItems: 'center' }}>
+              <div style={cardStyle}>
+                <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
+                  <div style={logoCircleStyle}>
+                    <Logo size="medium" showSubtitle={false} />
+                  </div>
+                  <div>
+                    <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#1f2937' }}>Rideshare Portal</h1>
+                    <p style={{ marginTop: '10px', ...mutedTextStyle }}>
+                      Sign in to manage your rides. Or, create a new rider or driver profile
+                      below if you're setting up an account for the first time.
+                    </p>
+
+                    <div style={{ marginTop: '18px', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                      <button
+                        type="button"
+                        onClick={() => { setShowRiderForm(true); setShowDriverForm(false); }}
+                        style={roleButtonStyle}
+                      >
+                        Add New Rider
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => { setShowDriverForm(true); setShowRiderForm(false); }}
+                        style={roleButtonStyle}
+                      >
+                        Add New Driver
+                      </button>
+                    </div>
+
+                    <div style={{ marginTop: '12px' }}>
+                      {!state.isAuthenticated ? (
+                        <p style={mutedTextStyle}>Please sign in with Asgardeo to continue.</p>
+                      ) : (
+                        <p style={mutedTextStyle}>Roles: {loadingRoles ? 'Loading...' : (roles.join(', ') || 'None')}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <aside>
+              <div style={panelStyle}>
+                {showRiderForm && (
+                  <Form
+                    rider={null}
+                    onSubmit={handleRiderSubmit}
+                    onCancel={() => setShowRiderForm(false)}
+                  />
+                )}
+
+                {showDriverForm && (
+                  <DriverForm
+                    driver={null}
+                    onSubmit={handleDriverSubmit}
+                    onCancel={() => setShowDriverForm(false)}
+                  />
+                )}
+
+                {!showRiderForm && !showDriverForm && (
+                  <div style={{ textAlign: 'center' }}>
+                    <p style={mutedTextStyle}>Use the controls on the left to create a rider or driver, or sign in above.</p>
+                  </div>
+                )}
+              </div>
+            </aside>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
     }
   };
 
@@ -119,109 +201,64 @@ const Login: React.FC = () => {
   // RENDER
   // ===========================
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header - matches structure from Driver/Rider pages */}
-      <header className="bg-white py-5 px-6 border-b border-gray-200 shadow-sm">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Logo size="small" showSubtitle={false} />
-            <div className="h-8 w-px bg-gray-200" />
-            <h2 className="text-lg font-semibold text-gray-900">Welcome</h2>
-          </div>
+    <div className="App">
+      <h1>Rideshare Login</h1>
 
-          <div className="flex items-center gap-3">
-            {!state.isAuthenticated ? (
-              <button
-                onClick={() => signIn()}
-                className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 transition"
-              >
-                Sign in
-              </button>
-            ) : (
-              <button
-                onClick={() => signOut()}
-                className="inline-flex items-center gap-2 rounded-md bg-gray-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-gray-700 transition"
-              >
-                Sign out
-              </button>
-            )}
-          </div>
-        </div>
-      </header>
+      {/* Buttons ALWAYS visible */}
+      <div style={{ display: "flex", gap: "12px", marginBottom: "16px" }}>
+        <button
+          onClick={() => {
+            setShowRiderForm(true);
+            setShowDriverForm(false);
+          }}
+        >
+          Add New Rider
+        </button>
 
-      <main className="max-w-7xl mx-auto px-6 py-10">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left: Intro card (span 2 on large screens) */}
-          <section className="lg:col-span-2 flex items-center">
-            <div className="w-full bg-white rounded-2xl shadow-md p-8">
-              <div className="flex items-start gap-6">
-                <div className="w-20 h-20 rounded-full bg-blue-50 flex items-center justify-center">
-                  <Logo size="medium" showSubtitle={false} />
-                </div>
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-900">Rideshare Portal</h1>
-                  <p className="mt-2 text-sm text-gray-600">
-                    Sign in to manage your rides. Or, create a new rider or driver profile
-                    below if you're setting up an account for the first time.
-                  </p>
+        <button
+          onClick={() => {
+            setShowDriverForm(true);
+            setShowRiderForm(false);
+          }}
+        >
+          Add New Driver
+        </button>
+      </div>
 
-                  {/* Role buttons */}
-                  <div className="mt-6 flex flex-wrap gap-3">
-                    <button
-                      onClick={() => { setShowRiderForm(true); setShowDriverForm(false); }}
-                      className="inline-flex items-center gap-2 rounded-full border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
-                    >
-                      Add New Rider
-                    </button>
+      {/* Rider form on login page */}
+      {showRiderForm && (
+        <Form
+          rider={null}
+          onSubmit={handleRiderSubmit}
+          onCancel={() => setShowRiderForm(false)}
+        />
+      )}
 
-                    <button
-                      onClick={() => { setShowDriverForm(true); setShowRiderForm(false); }}
-                      className="inline-flex items-center gap-2 rounded-full border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
-                    >
-                      Add New Driver
-                    </button>
-                  </div>
+      {/* Driver form on login page */}
+      {showDriverForm && (
+        <DriverForm
+          driver={null}
+          onSubmit={handleDriverSubmit}
+          onCancel={() => setShowDriverForm(false)}
+        />
+      )}
 
-                  <div className="mt-4">
-                    {!state.isAuthenticated ? (
-                      <p className="text-sm text-gray-500">Please sign in with Asgardeo to continue.</p>
-                    ) : (
-                      <p className="text-sm text-gray-500">Roles: {loadingRoles ? 'Loading...' : (roles.join(', ') || 'None')}</p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
+      {/* Auth controls */}
+      {!state.isAuthenticated && (
+        <>
+          <p>Please sign in to continue.</p>
+          <button onClick={() => signIn()}>Sign in with Asgardeo</button>
+        </>
+      )}
 
-          {/* Right: Forms area */}
-          <aside className="lg:col-span-1">
-            <div className="bg-white rounded-2xl shadow-md p-6 max-h-[70vh] overflow-y-auto">
-              {showRiderForm && (
-                <Form
-                  rider={null}
-                  onSubmit={handleRiderSubmit}
-                  onCancel={() => setShowRiderForm(false)}
-                />
-              )}
-
-              {showDriverForm && (
-                <DriverForm
-                  driver={null}
-                  onSubmit={handleDriverSubmit}
-                  onCancel={() => setShowDriverForm(false)}
-                />
-              )}
-
-              {!showRiderForm && !showDriverForm && (
-                <div className="text-center">
-                  <p className="text-sm text-gray-600">Use the controls on the left to create a rider or driver, or sign in above.</p>
-                </div>
-              )}
-            </div>
-          </aside>
-        </div>
-      </main>
+      {state.isAuthenticated && (
+        <>
+          {!loadingRoles && (
+            <p>Roles: {roles.join(", ") || "None assigned yet"}</p>
+          )}
+          <button onClick={() => signOut()}>Sign out</button>
+        </>
+      )}
     </div>
   );
 };
