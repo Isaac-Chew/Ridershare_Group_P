@@ -1,20 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
-import Table from '../components/Table';
-import Form from '../components/Form';
 import TripForm from '../components/TripForm';
 import TripsTable from '../components/TripsTable';
-import { Rider, RiderFormData, Trip } from '../types';
+import { Trip } from '../types';
 import { useAuth } from '../hooks/useAuth';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
 const RiderPage: React.FC = () => {
   const { email, isRider, isLoading: authLoading } = useAuth();
-  const [riders, setRiders] = useState<Rider[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [showForm, setShowForm] = useState(false);
-  const [editingRider, setEditingRider] = useState<Rider | null>(null);
   const [error, setError] = useState<string | null>(null);
   
   // Trip-related state
@@ -23,30 +17,6 @@ const RiderPage: React.FC = () => {
   const [isLoadingRequestedTrips, setIsLoadingRequestedTrips] = useState(false);
   const [rideHistory, setRideHistory] = useState<Trip[]>([]);
   const [isLoadingRideHistory, setIsLoadingRideHistory] = useState(false);
-
-  // Filter riders to only show those matching the current user's email
-  const filteredRiders = email 
-    ? riders.filter(rider => rider.Email.toLowerCase() === email.toLowerCase())
-    : [];
-
-  // Fetch all riders
-  const fetchRiders = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/riders`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch riders');
-      }
-      const data = await response.json();
-      setRiders(data.riders || []);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
-      console.error('Error fetching riders:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const fetchRequestedTrips = async () => {
     if (!email) return;
@@ -115,105 +85,10 @@ const RiderPage: React.FC = () => {
 
   useEffect(() => {
     if (!authLoading && isRider) {
-      fetchRiders();
       fetchRequestedTrips();
       fetchRideHistory();
     }
   }, [authLoading, isRider, email]);
-
-  // Handle form submission (create or update)
-  const handleFormSubmit = async (formData: RiderFormData) => {
-    try {
-      setError(null);
-      if (editingRider) {
-        // Update existing rider
-        const response = await fetch(`${API_BASE_URL}/api/riders/${editingRider.RiderID}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(formData),
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to update rider');
-        }
-
-        // Close form and return to table view immediately
-        setShowForm(false);
-        setEditingRider(null);
-        
-        // Refresh the list to show updated data
-        fetchRiders().catch(err => {
-          console.error('Error refreshing riders list:', err);
-        });
-      } else {
-        // Create new rider
-        const response = await fetch(`${API_BASE_URL}/api/riders`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(formData),
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to create rider');
-        }
-
-        // Close form and return to table view immediately
-        setShowForm(false);
-        setEditingRider(null);
-        
-        // Refresh the list to show new rider
-        fetchRiders().catch(err => {
-          console.error('Error refreshing riders list:', err);
-        });
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
-      console.error('Error saving rider:', err);
-    }
-  };
-
-  // Handle edit button click
-  const handleEdit = (rider: Rider) => {
-    setEditingRider(rider);
-    setShowForm(true);
-  };
-
-  // Handle delete button click
-  const handleDelete = async (rider: Rider) => {
-    if (!window.confirm(`Are you sure you want to delete ${rider.FirstName} ${rider.LastName}?`)) {
-      return;
-    }
-
-    try {
-      setError(null);
-      const response = await fetch(`${API_BASE_URL}/api/riders/${rider.RiderID}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to delete rider');
-      }
-
-      // Refresh the list
-      await fetchRiders();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
-      console.error('Error deleting rider:', err);
-    }
-  };
-
-  // Handle form cancel
-  const handleCancel = () => {
-    setShowForm(false);
-    setEditingRider(null);
-  };
 
   // Handle trip form submission
   const handleTripSubmit = async (tripData: Partial<Trip>) => {
@@ -302,52 +177,6 @@ const RiderPage: React.FC = () => {
     setShowTripForm(false);
   };
 
-  // Define table columns
-  const columns = [
-    { key: 'RiderID' as keyof Rider, label: 'ID' },
-    { key: 'FirstName' as keyof Rider, label: 'First Name' },
-    { key: 'LastName' as keyof Rider, label: 'Last Name' },
-    {
-      key: 'DateOfBirth' as keyof Rider,
-      label: 'Date of Birth',
-      render: (value: string) => new Date(value).toLocaleDateString(),
-    },
-    {key: 'signup_date' as keyof Rider, label: 'Signup Date',
-      render: (value: string) => new Date(value).toLocaleDateString(),
-    },
-    {
-      key: 'rider_status' as keyof Rider,
-      label: 'Rider Status',
-      render: (value: string) => (
-        <span 
-          style={{ 
-            color: value === 'Active' ? '#3b82f6' : '#64748b',
-            fontWeight: value === 'on' ? 500 : 400,
-          }}
-        >
-          {value === 'Active' ? 'Active' : 'Inactive'}
-        </span>
-      ),
-    },
-    { key: 'PhoneNumber' as keyof Rider, label: 'Phone' },
-    { key: 'Email' as keyof Rider, label: 'Email' },
-    { key: 'City' as keyof Rider, label: 'City' },
-    { key: 'State' as keyof Rider, label: 'State' },
-    {
-      key: 'LocationStatus' as keyof Rider,
-      label: 'Location',
-      render: (value: string) => (
-        <span 
-          style={{ 
-            color: value === 'on' ? '#3b82f6' : '#64748b',
-            fontWeight: value === 'on' ? 500 : 400,
-          }}
-        >
-          {value === 'on' ? 'On' : 'Off'}
-        </span>
-      ),
-    },
-  ];
 
   const pageStyle: React.CSSProperties = {
     minHeight: '100vh',
@@ -408,12 +237,6 @@ const RiderPage: React.FC = () => {
               Loading rider information...
             </div>
           )
-        ) : showForm ? (
-          <Form
-            rider={editingRider}
-            onSubmit={handleFormSubmit}
-            onCancel={handleCancel}
-          />
         ) : (
           <>
             {!isRider ? (
@@ -427,18 +250,7 @@ const RiderPage: React.FC = () => {
               </div>
             ) : (
               <>
-                <h2 style={{ marginBottom: '20px', color: '#1f2937', fontWeight: 600 }}>
-                  Riders Management
-                </h2>
-                <Table
-                  data={filteredRiders}
-                  columns={columns}
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
-                  isLoading={isLoading || authLoading}
-                />
-                
-                <div style={{ marginTop: '40px' }}>
+                <div style={{ marginTop: '0' }}>
                   <div style={{ 
                     display: 'flex', 
                     justifyContent: 'space-between', 

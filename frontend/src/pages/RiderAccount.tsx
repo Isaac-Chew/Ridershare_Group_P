@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import Table from '../components/Table';
-import { Rider } from '../types';
+import Form from '../components/Form';
+import { Rider, RiderFormData } from '../types';
 import { useAuth } from '../hooks/useAuth';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
@@ -10,6 +11,8 @@ const RiderAccount: React.FC = () => {
   const { email, isRider, isLoading: authLoading } = useAuth();
   const [riders, setRiders] = useState<Rider[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [editingRider, setEditingRider] = useState<Rider | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   // Filter riders to only show those matching the current user's email
@@ -41,6 +44,77 @@ const RiderAccount: React.FC = () => {
       fetchRiders();
     }
   }, [authLoading, isRider, email]);
+
+  // Handle form submission (update only, no create)
+  const handleFormSubmit = async (formData: RiderFormData) => {
+    try {
+      setError(null);
+      if (editingRider) {
+        // Update existing rider
+        const response = await fetch(`${API_BASE_URL}/api/riders/${editingRider.RiderID}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formData),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to update rider');
+        }
+
+        // Close form and return to table view immediately
+        setShowForm(false);
+        setEditingRider(null);
+        
+        // Refresh the list to show updated data
+        fetchRiders().catch(err => {
+          console.error('Error refreshing riders list:', err);
+        });
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      console.error('Error saving rider:', err);
+    }
+  };
+
+  // Handle edit button click
+  const handleEdit = (rider: Rider) => {
+    setEditingRider(rider);
+    setShowForm(true);
+  };
+
+  // Handle delete button click
+  const handleDelete = async (rider: Rider) => {
+    if (!window.confirm(`Are you sure you want to delete ${rider.FirstName} ${rider.LastName}?`)) {
+      return;
+    }
+
+    try {
+      setError(null);
+      const response = await fetch(`${API_BASE_URL}/api/riders/${rider.RiderID}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete rider');
+      }
+
+      // Refresh the list
+      await fetchRiders();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      console.error('Error deleting rider:', err);
+    }
+  };
+
+  // Handle form cancel
+  const handleCancel = () => {
+    setShowForm(false);
+    setEditingRider(null);
+  };
 
   // Define table columns
   const columns = [
@@ -116,25 +190,37 @@ const RiderAccount: React.FC = () => {
       <div style={contentStyle}>
         {error && <div style={errorStyle}>{error}</div>}
 
-        {!isRider ? (
-          <div style={{ 
-            padding: '40px', 
-            textAlign: 'center', 
-            color: '#64748b',
-            fontSize: '16px' 
-          }}>
-            You do not have permission to view this page. Rider role required.
-          </div>
+        {showForm ? (
+          <Form
+            rider={editingRider}
+            onSubmit={handleFormSubmit}
+            onCancel={handleCancel}
+          />
         ) : (
           <>
-            <h2 style={{ marginBottom: '20px', color: '#1f2937', fontWeight: 600 }}>
-              Account Information
-            </h2>
-            <Table
-              data={filteredRiders}
-              columns={columns}
-              isLoading={isLoading || authLoading}
-            />
+            {!isRider ? (
+              <div style={{ 
+                padding: '40px', 
+                textAlign: 'center', 
+                color: '#64748b',
+                fontSize: '16px' 
+              }}>
+                You do not have permission to view this page. Rider role required.
+              </div>
+            ) : (
+              <>
+                <h2 style={{ marginBottom: '20px', color: '#1f2937', fontWeight: 600 }}>
+                  Account Information
+                </h2>
+                <Table
+                  data={filteredRiders}
+                  columns={columns}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                  isLoading={isLoading || authLoading}
+                />
+              </>
+            )}
           </>
         )}
       </div>

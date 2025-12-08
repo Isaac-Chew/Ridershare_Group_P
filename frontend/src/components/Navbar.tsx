@@ -21,7 +21,7 @@ const Navbar: React.FC<NavbarProps> = ({ userType }) => {
       <div className="flex items-center gap-5">
         <Logo size="medium" showSubtitle={false} />
         <div className="h-8 w-px bg-gray-200" />
-        <div className="flex items-center gap-6 ml-5">
+        <div className="flex items-center gap-8 ml-8">
           <Link
             to={homePath}
             className={`no-underline text-base font-medium px-4 py-2 rounded-md transition-colors ${
@@ -44,7 +44,7 @@ const Navbar: React.FC<NavbarProps> = ({ userType }) => {
           </Link>
         </div>
       </div>
-      <div>
+      <div className="ml-8">
         <button
           onClick={() => signOut()}
           className="px-6 py-3 bg-gray-500 text-white border-none rounded-lg cursor-pointer text-base font-medium transition-colors shadow-sm hover:bg-gray-600"
