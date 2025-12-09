@@ -12,9 +12,11 @@ const Navbar: React.FC<NavbarProps> = ({ userType }) => {
   const location = useLocation();
   const homePath = userType === 'driver' ? '/driver' : '/rider';
   const accountPath = userType === 'driver' ? '/driver/account' : '/rider/account';
+  const paymentsPath = userType === 'rider' ? '/rider/payments' : null;
 
   const isHomeActive = location.pathname === homePath;
   const isAccountActive = location.pathname === accountPath;
+  const isPaymentsActive = paymentsPath ? location.pathname === paymentsPath : false;
 
   const navStyle: React.CSSProperties = {
     backgroundColor: '#ffffff',
@@ -113,6 +115,24 @@ const Navbar: React.FC<NavbarProps> = ({ userType }) => {
           >
             Account
           </Link>
+          {paymentsPath && (
+            <Link
+              to={paymentsPath}
+              style={isPaymentsActive ? activeLinkStyle : linkStyle}
+              onMouseEnter={(e) => {
+                if (!isPaymentsActive) {
+                  e.currentTarget.style.backgroundColor = '#f3f4f6';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isPaymentsActive) {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }
+              }}
+            >
+              Payments
+            </Link>
+          )}
         </div>
       </div>
       <div style={{ marginLeft: '32px' }}>

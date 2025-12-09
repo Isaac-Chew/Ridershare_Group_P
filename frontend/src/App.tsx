@@ -8,6 +8,7 @@ import React, { useEffect, useState } from "react";
 import Driver from "./pages/Driver"; // if you add a driver page later
 import DriverAccount from "./pages/DriverAccount";
 import RiderAccount from "./pages/RiderAccount";
+import RiderPayments from "./pages/RiderPayments";
 
 const App: React.FC = () => {
   const { state, getDecodedIDToken } = useAuthContext();
@@ -90,6 +91,18 @@ const App: React.FC = () => {
         element={
           state.isAuthenticated && isRider ? (
             <RiderAccount />
+          ) : (
+            <Navigate to="/" replace />
+          )
+        }
+      />
+
+      {/* Protected Rider Payments page */}
+      <Route
+        path="/rider/payments"
+        element={
+          state.isAuthenticated && isRider ? (
+            <RiderPayments />
           ) : (
             <Navigate to="/" replace />
           )
