@@ -8,9 +8,10 @@ interface TripFormProps {
   riderId: string;
   onSubmit: (data: Partial<Trip>) => void;
   onCancel: () => void;
+  onLocationsSubmitted?: (rideId: number, pickup: string, dropoff: string) => void;
 }
 
-const TripForm: React.FC<TripFormProps> = ({ trip, riderId, onSubmit, onCancel }) => {
+const TripForm: React.FC<TripFormProps> = ({ trip, riderId, onSubmit, onCancel, onLocationsSubmitted }) => {
 
   const [formData, setFormData] = useState<Partial<Trip>>({
     PickUpLocation: '',
@@ -21,6 +22,8 @@ const TripForm: React.FC<TripFormProps> = ({ trip, riderId, onSubmit, onCancel }
     RiderID: riderId,
   });
 
+  const [locationsSubmitted, setLocationsSubmitted] = useState(false);
+  const [submittedRideId, setSubmittedRideId] = useState<number | null>(null);
   const [tipInputValue, setTipInputValue] = useState<string>('');
   const [errors, setErrors] = useState<Partial<Record<'PickUpLocation' | 'DropOffLocation' | 'EstimatedTime' | 'Fare' | 'Tip', string>>>({});
 
@@ -87,6 +90,53 @@ const TripForm: React.FC<TripFormProps> = ({ trip, riderId, onSubmit, onCancel }
     }
 
     onSubmit(payload);
+  };
+
+  const handleSubmitLocations = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!riderId || riderId.trim() === '') {
+      setErrors({ PickUpLocation: 'Rider ID is required. Please refresh the page.' });
+      return;
+    }
+
+    if (!validate()) return;
+
+    const payload: Partial<Trip> = {
+      PickUpLocation: String(formData.PickUpLocation || '').trim(),
+      DropOffLocation: String(formData.DropOffLocation || '').trim(),
+      RiderID: riderId.trim(),
+    };
+
+    if (!payload.PickUpLocation || !payload.DropOffLocation) {
+      return;
+    }
+
+    try {
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+      const response = await fetch(`${API_BASE_URL}/api/trip`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to submit locations');
+      }
+
+      const result = await response.json();
+      const rideId = result.trip?.RideID;
+
+      if (rideId && onLocationsSubmitted) {
+        setSubmittedRideId(rideId);
+        setLocationsSubmitted(true);
+        onLocationsSubmitted(rideId, payload.PickUpLocation as string, payload.DropOffLocation as string);
+      }
+    } catch (err) {
+      setErrors({ PickUpLocation: err instanceof Error ? err.message : 'Failed to submit locations' });
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -190,7 +240,8 @@ const TripForm: React.FC<TripFormProps> = ({ trip, riderId, onSubmit, onCancel }
           name="PickUpLocation"
           value={String(formData.PickUpLocation ?? '')}
           onChange={handleChange}
-          style={inputStyle}
+          disabled={locationsSubmitted}
+          style={locationsSubmitted ? readOnlyInputStyle : inputStyle}
           placeholder="e.g., 123 Main St"
         />
         {errors.PickUpLocation && <div style={errorStyle}>{errors.PickUpLocation}</div>}
@@ -206,77 +257,105 @@ const TripForm: React.FC<TripFormProps> = ({ trip, riderId, onSubmit, onCancel }
           name="DropOffLocation"
           value={String(formData.DropOffLocation ?? '')}
           onChange={handleChange}
-          style={inputStyle}
+          disabled={locationsSubmitted}
+          style={locationsSubmitted ? readOnlyInputStyle : inputStyle}
           placeholder="e.g., 456 Market St"
         />
         {errors.DropOffLocation && <div style={errorStyle}>{errors.DropOffLocation}</div>}
       </div>
 
-      {/* AI-POWERED ESTIMATED TIME */}
-      <div style={{ marginBottom: "20px" }}>
-        <label style={labelStyle}>Estimated Time (minutes)</label>
+      {/* SUBMIT LOCATIONS BUTTON (only shows before locations submitted) */}
+      {!locationsSubmitted && (
+        <div style={{ marginBottom: '20px' }}>
+          <button
+            type="button"
+            onClick={handleSubmitLocations}
+            style={{
+              width: '100%',
+              padding: '12px 24px',
+              backgroundColor: '#10b981',
+              color: 'white',
+              borderRadius: '8px',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: '16px',
+              fontWeight: 500,
+            }}
+          >
+            Submit Locations
+          </button>
+        </div>
+      )}
 
-        <input
-          type="number"
-          name="EstimatedTime"
-          value={Number(formData.EstimatedTime ?? 8)}
-          readOnly
-          style={readOnlyInputStyle}
-        />
+      {/* AI-POWERED ESTIMATED TIME - only show after locations submitted */}
+      {locationsSubmitted && (
+        <div style={{ marginBottom: "20px" }}>
+          <label style={labelStyle}>Estimated Time (minutes)</label>
 
-        <TripTimeEstimator
-          pickup={String(formData.PickUpLocation || "")}
-          dropoff={String(formData.DropOffLocation || "")}
-          onEstimate={(minutes) =>
-            setFormData((prev) => ({
-              ...prev,
-              EstimatedTime: minutes,
-            }))
-          }
-        />
-      </div>
-
-      {/* FARE + TIP */}
-      <div style={{ display: 'flex', gap: '12px' }}>
-        <div style={{ flex: 1 }}>
-          <label style={labelStyle}>Fare ($)</label>
           <input
             type="number"
-            step="0.01"
-            name="Fare"
-            value={Number(formData.Fare ?? 19)}
+            name="EstimatedTime"
+            value={Number(formData.EstimatedTime ?? 8)}
             readOnly
             style={readOnlyInputStyle}
           />
-        </div>
 
-        <div style={{ flex: 1 }}>
-          <label style={labelStyle}>Tip ($)</label>
-          <input
-            type="number"
-            step="0.01"
-            name="Tip"
-            value={tipInputValue}
-            onChange={handleChange}
-            style={inputStyle}
-            min={0}
-          />
-
-          <TipEstimator
-            fare={Number(formData.Fare ?? 19)}
-            estimatedTime={Number(formData.EstimatedTime ?? 8)}
-            onEstimate={(tip) => {
-              // update the controlled input + form data
-              const formatted = tip.toFixed(2);
-              setTipInputValue(formatted);
+          <TripTimeEstimator
+            pickup={String(formData.PickUpLocation || "")}
+            dropoff={String(formData.DropOffLocation || "")}
+            onEstimate={(minutes) =>
               setFormData((prev) => ({
                 ...prev,
-                Tip: tip,
-              }));
-            }}
+                EstimatedTime: minutes,
+                Fare: Number((minutes * 0.8).toFixed(2)),
+              }))
+            }
           />
         </div>
-      </div>
+      )}
+
+      {/* FARE + TIP - only show after locations submitted */}
+      {locationsSubmitted && (
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <div style={{ flex: 1 }}>
+            <label style={labelStyle}>Fare ($)</label>
+            <input
+              type="number"
+              step="0.01"
+              name="Fare"
+              value={Number(formData.Fare ?? 19)}
+              readOnly
+              style={readOnlyInputStyle}
+            />
+          </div>
+
+          <div style={{ flex: 1 }}>
+            <label style={labelStyle}>Tip ($)</label>
+            <input
+              type="number"
+              step="0.01"
+              name="Tip"
+              value={tipInputValue}
+              onChange={handleChange}
+              style={inputStyle}
+              min={0}
+            />
+
+            <TipEstimator
+              fare={Number(formData.Fare ?? 19)}
+              estimatedTime={Number(formData.EstimatedTime ?? 8)}
+              onEstimate={(tip) => {
+                const formatted = tip.toFixed(2);
+                setTipInputValue(formatted);
+                setFormData((prev) => ({
+                  ...prev,
+                  Tip: tip,
+                }));
+              }}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Buttons */}
       <div style={buttonContainerStyle}>
@@ -288,12 +367,14 @@ const TripForm: React.FC<TripFormProps> = ({ trip, riderId, onSubmit, onCancel }
           Cancel
         </button>
 
-        <button
-          type="submit"
-          style={{ ...buttonStyle, backgroundColor: '#3b82f6', color: 'white' }}
-        >
-          {trip?.RideID ? 'Save Changes' : 'Request Trip'}
-        </button>
+        {locationsSubmitted && (
+          <button
+            type="submit"
+            style={{ ...buttonStyle, backgroundColor: '#3b82f6', color: 'white' }}
+          >
+            {trip?.RideID ? 'Save Changes' : 'Request Trip'}
+          </button>
+        )}
       </div>
     </form>
   );

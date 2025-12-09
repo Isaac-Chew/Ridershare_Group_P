@@ -90,85 +90,143 @@ const RiderPage: React.FC = () => {
     }
   }, [authLoading, isRider, email]);
 
-  // Handle trip form submission
+  // Handle trip form submission (after AI has already estimated)
   const handleTripSubmit = async (tripData: Partial<Trip>) => {
     if (!email) {
       setError('Rider email not found');
       return;
     }
 
-    // Validate required fields
-    if (!tripData.PickUpLocation || !tripData.DropOffLocation) {
-      setError('Pickup and dropoff locations are required');
-      return;
-    }
-
     try {
       setError(null);
       
-      // Prepare the payload matching backend expectations
+      // At this point, EstimatedTime and Fare should already be set by AI
       const payload = {
         PickUpLocation: String(tripData.PickUpLocation).trim(),
         DropOffLocation: String(tripData.DropOffLocation).trim(),
         EstimatedTime: Number(tripData.EstimatedTime || 0),
         Fare: Number(tripData.Fare || 0),
         Tip: Number(tripData.Tip || 0),
-        RiderID: String(email).trim(), // Always use the authenticated rider's email
+        RiderID: String(email).trim(),
         DriverID: tripData.DriverID || null,
+        RideStatus: 'Requested',
       };
 
-      console.log('Submitting trip with payload:', payload);
-      console.log('API URL:', `${API_BASE_URL}/api/trip`);
+      console.log('Submitting final trip with payload:', payload);
 
-      let response;
-      try {
-        response = await fetch(`${API_BASE_URL}/api/trip`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload),
-        });
-      } catch (networkError) {
-        console.error('Network error:', networkError);
-        throw new Error(`Network error: Unable to connect to server. Please check if the backend is running at ${API_BASE_URL}`);
-      }
-
-      console.log('Response status:', response.status, response.statusText);
+      const response = await fetch(`${API_BASE_URL}/api/trip`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
 
       if (!response.ok) {
-        let errorMessage = `Failed to create trip (${response.status} ${response.statusText})`;
-        try {
-          const errorData = await response.json();
-          console.error('Error response data:', errorData);
-          errorMessage = errorData.error || errorData.message || errorMessage;
-          if (errorData.details) {
-            console.error('Error details:', errorData.details);
-          }
-        } catch (parseError) {
-          // If response is not JSON, try to get text
-          try {
-            const errorText = await response.text();
-            console.error('Error response text:', errorText);
-            errorMessage = errorText || errorMessage;
-          } catch (textError) {
-            console.error('Could not parse error response:', textError);
-            errorMessage = `Server returned ${response.status} ${response.statusText}`;
-          }
-        }
-        throw new Error(errorMessage);
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Failed to create trip (${response.status})`);
       }
 
-      const result = await response.json();
-      console.log('Trip created successfully:', result);
+      console.log('Trip created successfully');
 
       // Close form and refresh trips
       setShowTripForm(false);
       await fetchRequestedTrips();
     } catch (err) {
-      console.error('Error creating trip - full error:', err);
+      console.error('Error creating trip:', err);
       const errorMessage = err instanceof Error ? err.message : 'An error occurred while creating the trip';
       setError(errorMessage);
+    }
+  };
+
+  // Handle locations submitted - calls AI then updates trip
+  const handleLocationsSubmitted = async (rideId: number, pickup: string, dropoff: string) => {
+    try {
+      // Call AI to get estimated time
+      const estimatedTime = await estimateTravelTime(pickup, dropoff);
+      
+      // Calculate fare based on estimated time (EstimatedTime * 0.8)
+      const fare = Number((estimatedTime * 0.8).toFixed(2));
+      
+      // Update trip with AI estimates
+      const updatePayload = {
+        EstimatedTime: estimatedTime,
+        Fare: fare,
+        RideStatus: 'Requested',
+      };
+
+      const updateResponse = await fetch(`${API_BASE_URL}/api/trip/${rideId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatePayload),
+      });
+
+      if (!updateResponse.ok) {
+        throw new Error('Failed to update trip with estimates');
+      }
+
+      console.log('Trip updated with AI estimates');
+      await fetchRequestedTrips();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to estimate travel time');
+      console.error('Error in handleLocationsSubmitted:', err);
+    }
+  };
+
+  // AI function to estimate travel time
+  const estimateTravelTime = async (pickup: string, dropoff: string): Promise<number> => {
+    try {
+      const endpoint = import.meta.env.VITE_PROJECT_ENDPOINT as string;
+      const apiKey = import.meta.env.VITE_AZURE_API_KEY as string;
+      const deployment = import.meta.env.VITE_MODEL_DEPLOYMENT_NAME ?? "gpt-4o";
+
+      const credential = {
+        getToken: async () => ({
+          token: apiKey,
+          expiresOnTimestamp: Date.now() + 3600000,
+        }),
+      };
+
+      const { AIProjectClient } = await import("@azure/ai-projects");
+      const project = new AIProjectClient(endpoint, credential);
+      const client = await project.getAzureOpenAIClient({
+        apiVersion: "2024-12-01-preview",
+      });
+
+      const prompt = `
+        Estimate travel time between:
+        Pickup: ${pickup}
+        Dropoff: ${dropoff}
+
+        Rules:
+        - Return ONLY a number in minutes. No text.
+        - If unsure, guess a reasonable number between 5–25.
+      `;
+
+      const result = await client.chat.completions.create({
+        model: deployment,
+        messages: [
+          { role: "system", content: "Return only a number." },
+          { role: "user", content: prompt },
+        ],
+        temperature: 0.4,
+        max_tokens: 10,
+      });
+
+      const output = String(result.choices?.[0]?.message?.content || "").trim();
+      const minutes = Number(output);
+
+      if (!isNaN(minutes) && minutes > 0) {
+        return minutes;
+      } else {
+        // fallback
+        return 10 + Math.floor(Math.random() * 10);
+      }
+    } catch (err) {
+      console.error("Travel time AI error:", err);
+      return 12 + Math.floor(Math.random() * 8);
     }
   };
 
@@ -226,6 +284,7 @@ const RiderPage: React.FC = () => {
               riderId={email}
               onSubmit={handleTripSubmit}
               onCancel={handleTripCancel}
+              onLocationsSubmitted={handleLocationsSubmitted}
             />
           ) : (
             <div style={{ 
