@@ -936,6 +936,50 @@ app.get('/api/trip/status/:status', async (req, res) => {
     }
 });
 
+// PUT update trip (general update for EstimatedTime, Fare, RideStatus, etc.)
+app.put('/api/trip/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const tripIdInt = parseInt(id);
+
+        if (isNaN(tripIdInt)) {
+            return res.status(400).json({ 
+                error: 'Invalid trip ID' 
+            });
+        }
+
+        const trip = await Trip.findByPk(tripIdInt);
+
+        if (!trip) {
+            return res.status(404).json({ 
+                error: 'Trip not found' 
+            });
+        }
+
+        // Update only provided fields
+        const { EstimatedTime, Fare, Tip, RideStatus, DriverID } = req.body;
+        
+        const updateData = {};
+        if (EstimatedTime !== undefined) updateData.EstimatedTime = EstimatedTime;
+        if (Fare !== undefined) updateData.Fare = Fare;
+        if (Tip !== undefined) updateData.Tip = Tip;
+        if (RideStatus !== undefined) updateData.RideStatus = RideStatus;
+        if (DriverID !== undefined) updateData.DriverID = DriverID;
+
+        await trip.update(updateData);
+
+        res.status(200).json({
+            message: 'Trip updated successfully',
+            trip
+        });
+    } catch (err) {
+        console.error('Error updating trip:', err);
+        res.status(500).json({ 
+            error: 'Failed to update trip' 
+        });
+    }
+});
+
 // PUT update trip (accept trip - driver accepts ride)
 app.put('/api/trip/:id/accept', async (req, res) => {
     try {
